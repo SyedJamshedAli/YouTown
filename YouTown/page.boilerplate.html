@@ -1,0 +1,16 @@
+<div id="maps" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="#" data-role="button" data-rel="back" data-icon="arrow-l">Back</a>
+		<h1>Maps</h1>
+	</div>
+	<div data-role="content">
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#maps'), function($page) {
+			$('#home div[data-id=global-footer]').clone().appendTo($page);
+			setActiveFooterNav($page, 'maps.html');
+			$page.data('init-content', $page.find('div[data-role=content]').html());
+			
+		});
+	</script>	
+</div>

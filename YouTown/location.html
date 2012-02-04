@@ -1,0 +1,263 @@
+<div id="location" data-role="page">
+	<div data-role="header" class="main-header"   data-theme="b">
+		<h1 class="lang search-your-location">Search your location</h1>
+	</div>
+	<div data-role="content">
+		<ul class="loc-list" data-filter="true" data-filter-placeholder="City or Country">
+		</ul>	
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		//console.log('paged');
+		
+	pageScript($('#location'), function(PAGE){
+		if($('#location').find('ul.loc-list').attr('data-role') == 'listview') return;	
+		$.mobile.showPageLoadingMsg();
+		
+		function addSearchEvent(page) {
+			filterForm = $('form.ui-listview-filter', page);
+			if(!filterForm.hasClass('evAttach')) {
+				$(page).data('filterForm', filterForm);
+				console.log('addSearchEvent', $(page).data('filterForm'));
+				filterForm.addClass('evAttach').bind('submit.filterFormAction', filterFormAction);
+				
+			}
+		}
+		
+		function createLocationList(data, listfor) {
+			console.log('near', data);
+			
+			li = [];
+			locset = store.get('config.location.set');
+			
+			/*
+			if(!_.isNull(locset) && listfor != 'search') {
+				myloc = locset;
+				mylocplace = myloc.city;
+				if(_.isEmpty(mylocplace)) mylocplace = myloc.county;
+					
+				li.push('<li data-role="list-divider">My Set Location</li>');
+				li.push("<li class=\"selected\"><a href=\"#\" data-loc-coords=\""+myloc.coords+"\" data-loc-id=\""+myloc.id+"\">"+mylocplace+" "+myloc.country+"</a></li>");
+			}
+			*/
+			if($page.data('locations-temp') == undefined) {
+				$page.data('locations-temp', {});
+			}
+			
+			temp = {};
+			
+			lochistory = store.get('config.location.history');
+			lochistory = _.uniq(lochistory);
+			if(!_.isNull(lochistory) && listfor != 'search') {
+				li.push('<li data-role="list-divider" class="lang 5-last-location">5 last locations</li>');
+				
+				for(i=0; i < lochistory.length; i++) {
+					if(!_.isNull(lochistory[i])) {
+						temp[lochistory[i].id] = lochistory[i];
+						
+						hplace = lochistory[i].city || '';
+						if(_.isEmpty(hplace)) hplace = lochistory[i].county;
+						if(!_.isNull(locset) && locset.id == lochistory[i].id) {
+							sel = "selected";
+						} else {
+							sel = '';
+						}
+						console.log('last loc id', lochistory[i].id, hplace);
+						
+						if(!_.isUndefined(lochistory[i].id)) {
+							_id_ = lochistory[i].id;
+							
+							myloc = lochistory[i];
+							where = myloc.county;
+							if(_.isEmpty(where) || where == 'default') {
+								where = myloc.city;
+							} else {
+								where += ' County';
+							}
+							if(!_.isEmpty(myloc.state) && myloc.city.indexOf(',') < 0) where += ', ' + myloc.state;
+
+							hplace = where; 
+							
+							li.push("<li class=\"history "+sel+"\"><a href=\"#\" data-loc-coords=\""+lochistory[i].coords+"\" data-loc-id=\""+_id_+"\">"+hplace+", "+lochistory[i].country+"</a></li>");
+						}	
+					}
+				}
+			}
+			
+			if(_.isUndefined(listfor) || listfor == 'closest') {
+				li.push('<li data-role="list-divider" class="lang 5-closest-location">5 closest locations</li>');
+				listfor = 'closest';
+			} 
+			if(listfor == 'search'){
+				li.push('<li data-role="list-divider">Search Result</li>');
+			}
+			
+			
+			
+			for(i=0; i< data.length; i++) {
+				temp[data[i].id] = data[i];
+				place = data[i].city;
+				
+				myloc = data[i];
+				where = myloc.county;
+				if(_.isEmpty(where) || where == 'default') {
+					where = myloc.city;
+				}  else {
+					where += ' County';
+				}
+				
+				if(!_.isEmpty(myloc.state) && myloc.city.indexOf(',') < 0) where += ', ' + myloc.state;
+				
+				if(_.isEmpty(place)) place = where;
+				
+				if(!_.isNull(locset) && locset.id == data[i].id) {
+					sel = "selected";
+				} else {
+					sel = '';
+				}
+				
+				li.push("<li class=\""+listfor+ " " + sel + "\"><a href=\"#\" data-loc-coords=\""+data[i].coords+"\" data-loc-id=\""+data[i].id+"\">"+place+', '+myloc.country+"</a></li>");
+			}
+			
+			$page.data('locations-temp', temp);
+			console.log('loc page', temp, 	$page.data('locations-temp'));
+			if(listfor == 'closest') {
+				$page.find('ul.loc-list').attr('data-role', "").html(li.join("")).promise().done(function(){
+					//console.log('list', $page.find('ul.loc-list'));
+					updateLang($page.attr('id'));
+					$page.find('ul.loc-list').attr('data-role', "listview").listview().promise().done(function(){
+						addSearchEvent($page);
+					});
+
+				});
+			} else {
+				console.log('search list', 	$page.find('ul.loc-list'));
+				$page.find('ul.loc-list').prepend(li.join("")).listview();
+				//$page.find('li.search').listview();
+			}
+			$('#location ul.loc-list').listview('refresh');
+			$page.find('ul.loc-list li.selected span.ui-icon').removeClass('ui-icon-arrow-r').addClass('ui-icon-check');
+			$.mobile.hidePageLoadingMsg();	
+		
+			$('ul.loc-list a').bind('vclick', function(){
+				//alert();
+				$el = $(this);
+				$parentLi = $($el.parent().parent().parent());
+				listMarkAsSelected($parentLi);
+				locs = $page.data('locations-temp');
+				loc = locs[$el.attr('data-loc-id')];
+				console.log('selected loc', loc);
+				setConfigMyLocation(loc, function(){
+					$.mobile.changePage('home.html', {reloadPage: true});
+				});
+			});
+		
+		}
+		
+		function setConfigClosestLocation(page, callBack) {
+			$page = $(page);
+			
+			uri = API + 'location/';
+			params = {};
+			params.geoloc = store.get('config.position').join(",");
+			params.mode = 'closest_mode';
+			$.getJSON(uri, params, function(data){
+				store.set('config.location.closest', data);
+				if(_.isFunction(callBack)) callBack(data);
+			});
+		}
+		
+		function searchLocation(loc, callBack) {
+			$.mobile.showPageLoadingMsg();
+			uri = API + 'location/';
+			params = {};
+			params.fullText = loc;
+			params.mode = 'search_mode';
+			$.getJSON(uri, params, function(data){
+				if(_.isFunction(callBack)) callBack(data, 'search');
+			});
+		}
+		
+		function doClosestLocation(page) {
+			setConfigClosestLocation(page, createLocationList);
+		}
+		
+		function setConfigMyLocation(loc, cb) {
+			console.log('loc', loc);
+			store.set('config.location.set', loc);
+			lochistory = null;
+			lochistory = store.get('config.location.history');
+			if(_.isNull(lochistory)) lochistory = [];
+			/*
+			lochistory = _.select(lochistory, function(row){
+				return (!_.isNull(row) || !_.isUndefined(row) );
+			});
+			*/
+			ids = _.pluck(lochistory, 'id');
+			index = ids.indexOf(loc.id);
+			if(index < 0) {
+				console.log('add');
+				lochistory.unshift(loc);
+			} else {
+				console.log('exist');
+				lochistory[index] = null;
+				lochistory.unshift(loc);
+			}
+			
+			lochistory = _.compact(lochistory);
+			
+			
+			
+			ids = _.uniq(ids);
+			
+			//lochistory = _.uniq(lochistory);
+			console.log('ids' , ids);
+			console.log('history' , lochistory);
+			store.set('config.location.__history', lochistory);
+			
+			
+			
+			lochistory = lochistory.slice(0, 5);
+			
+			store.set('config.location.history', lochistory);
+			
+			if(_.isFunction(cb)) {
+				cb();
+			}
+		}
+		
+		function listMarkAsSelected(li) {
+			$(li).siblings().removeClass('selected');
+			
+			$(li.parent()).find('li span.ui-icon')
+				.removeClass('ui-icon-arrow-r')
+				.addClass('ui-icon-arrow-r')
+				.removeClass('ui-icon-check');
+			
+			$(li).addClass('selected');
+			$(li).find('span.ui-icon').removeClass('ui-icon-arrow-r').addClass('ui-icon-check');
+		}
+		
+		$('#location').live('pagecreate', function(){
+			console.log("b4create");
+			doClosestLocation(this);
+		});
+		
+		
+		function filterFormAction() {
+			loc = $(this).find('input[data-type=search]').val();
+			searchLocation(loc, createLocationList);
+			console.log('filterForm submit');
+			return false;
+
+		}
+
+		$('#location').live('pageshow', function(ev){
+			$.mobile.showPageLoadingMsg();
+
+		}).live('pagebeforehide', function(){
+			$(this).find('ul.loc-list').attr('data-role', "");
+		});
+	});	
+	</script>		
+</div>
+	

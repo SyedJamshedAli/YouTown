@@ -1,0 +1,54 @@
+<div id="settings-time" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="settings.html" data-role="button" data-icon="arrow-l">Back</a>
+		<h1 class="lang set-time">Set Time</h1>
+		
+	</div>
+	<div data-role="content">
+		<ul data-role="listview" class="set-time">
+			<li><a href="#" class="" data-data-val="12">12-Hour</a></li>
+			<li><a href="#" class="" data-data-val="24">24-Hour</a></li>
+		</ul>	
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#settings-time'), function($page) {
+			
+			
+			function resetSel() {
+				lis = $page.find('ul.set-time li');
+				lis.removeClass('selected');
+				spans = lis.find('span.ui-icon');
+				spans.removeClass('ui-icon-check');
+				spans.addClass('ui-icon-arrow-r');
+				console.log('lis', lis.find('span.ui-icon'));
+				
+			}
+			
+			resetSel();
+			
+			function setSel(start) {
+				$li = $page.find('ul.set-time a[data-data-val="'+start+'"]').parent().parent().parent();
+				console.log('$li', $li);
+				$li.addClass('selected').find('span.ui-icon').removeClass('ui-icon-arrow-r').addClass('ui-icon-check');
+
+			}
+			
+			console.log($page.find('ul.set-time li').find('span.ui-icon'));
+			
+			$page.data('init-content', $page.find('div[data-role=content]').html());
+			$page.find('ul.set-time a').bind('vclick', function(){
+					resetSel();
+					setSel($(this).attr('data-data-val'));
+				
+				store.set('config.timeformat', $(this).attr('data-data-val'));
+				$.mobile.changePage('settings.html', {reloadPage: true});
+			});
+			
+			$page.live('pageshow', function(){
+				start = store.get('config.timeformat') || null;
+				resetSel();
+				setSel(start);
+			});
+		});
+	</script>	
+</div>

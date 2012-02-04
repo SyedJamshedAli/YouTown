@@ -1,0 +1,109 @@
+<div id="events-filter" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="#" data-role="button" data-rel="back" data-icon="arrow-l">Back</a>
+		<h1>Events Filter</h1>
+	</div>
+	<div data-role="content" class="filterpage">
+		<ul data-role="listview" data-inset="true"> 
+		</ul>	
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#events-filter'), function($page) {
+			tpData = store.get('config.events.filterData');
+			filter = store.get('config.events.filter') || null;
+			li = [];
+			hasNewFilter = false;
+			for(key in tpData) {
+				val = tpData[key];
+				tpl = ['<li data-role="fieldcontain">', 
+					'<label for="'+key+'">'+val+'</label>', 
+					'<select name="'+key+'" id="'+key+'" data-role="slider">',
+						'<option value="on">On</option>', 
+						'<option value="off">Off</option>', 
+					'</select>',
+					'<br />', 
+				'</li>'
+				].join('');
+				li.push(tpl);
+				
+				if(!_.isNull(filter) && !filter[key]) {
+					filter[key] = "on";
+					hasNewFilter = true;
+				}
+			}
+			
+			if(hasNewFilter) {
+				store.set('config.events.filter', filter); 
+			}
+			
+			$page
+				.find('div[data-role="content"] ul')
+				.html(li.join(""))
+				.trigger('create')
+				.promise()
+				.done(function(){
+					filter = store.get('config.events.filter') || null;
+					
+					
+					
+					console.log('filter', filter);
+					if(_.isNull(filter)) {
+						initFilter = {};
+						$('select', $page).each(function(){
+							name = $(this).attr('name');
+							console.log('filter', name);
+							initFilter[name] = $(this).val();
+						});
+						console.log(initFilter);
+						store.set('config.events.filter', initFilter);
+						setFilterParams();
+
+					} else {
+						//console.log('update select');
+						
+					}
+
+					
+					
+					function setFilterParams(key, val) {
+						filter = store.get('config.events.filter');
+
+						if(!_.isUndefined(key)) {
+							filter[key] = val;
+							store.set('config.events.filter', filter);
+						}
+
+						pars = [];
+						hasOff = false;
+						for(key in filter) {
+							if(filter[key] == 'on') {
+								pars.push(makeKey(key));
+							} else {
+								hasOff = true;
+							}
+						}
+
+						store.set('config.events.filterhas.off', hasOff);
+						store.set('config.events.filterpars', pars);
+					}
+
+					$('select', $page).bind('change', function(){
+						name = $(this).attr('name');
+						val = $(this).val();
+						setFilterParams(name, val);
+					});
+					
+				});
+			
+				function updateSelect() {
+					filter = store.get('config.events.filter');
+					for(key in filter) {
+						console.log('sel', $('select[name='+key+']', $page));
+						$('select[name='+key+']', $page).val(filter[key]).trigger('change');
+					}
+				}
+				
+				$page.live('pageshow', updateSelect);
+		});
+	</script>
+</div>

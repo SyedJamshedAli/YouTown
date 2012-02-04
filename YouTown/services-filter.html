@@ -1,0 +1,132 @@
+<div id="services-filter" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="#" data-role="button" data-rel="back" data-icon="arrow-l">Back</a>
+		<h1>Services Filter</h1>
+	</div>
+	<div data-role="content" class="filterpage">
+		<ul data-role="listview" data-inset="true"> 
+		</ul>	
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#services-filter'), function($page) {
+			filterData = {
+				Seniors: "Seniors",
+				Business: "Business",
+				Singles: "Singles",
+				Kids: "Kids",
+				Teens: "Teens",
+				Family: "Family"
+			};
+			tpData = store.get('config.services.filterData') || null;
+			
+			if(tpData == null || _.isEmpty(tpData)) {
+				store.set('config.services.filterData', filterData);
+				tpData = store.get('config.services.filterData');
+			}
+			
+			eventFiltersAll = store.get('jsondata.services-data-unique-filters');
+			
+			filter = store.get('config.services.filter') || null;
+			li = [];
+			hasNewFilter = false;
+			for(key in tpData) {
+				
+				if(eventFiltersAll.indexOf(key) > -1) {
+					en = 'enabled';
+				} else {
+					en = 'disabled';
+				}
+				
+				val = tpData[key];
+				tpl = ['<li data-role="fieldcontain" class="'+en+'">', 
+					'<label for="'+key+'">'+val+'</label>', 
+					'<select name="'+key+'" id="'+key+'" data-role="slider">',
+						'<option value="on">On</option>', 
+						'<option value="off">Off</option>', 
+					'</select>',
+					'<br />', 
+				'</li>'
+				].join('');
+				li.push(tpl);
+				
+				if(!_.isNull(filter) && !filter[key]) {
+					filter[key] = "on";
+					hasNewFilter = true;
+				}
+			}
+			
+			if(hasNewFilter) {
+				store.set('config.services.filter', filter); 
+			}
+			
+			$page
+				.find('div[data-role="content"] ul')
+				.html(li.join(""))
+				.trigger('create')
+				.promise()
+				.done(function(){
+					filter = store.get('config.services.filter') || null;
+					
+					
+					
+					console.log('filter', filter);
+					if(_.isNull(filter)) {
+						initFilter = {};
+						$('select', $page).each(function(){
+							name = $(this).attr('name');
+							console.log('filter', name);
+							initFilter[name] = $(this).val();
+						});
+						console.log(initFilter);
+						store.set('config.services.filter', initFilter);
+						setFilterParams();
+
+					} else {
+						//console.log('update select');
+						
+					}
+
+					
+					
+					function setFilterParams(key, val) {
+						filter = store.get('config.services.filter');
+
+						if(!_.isUndefined(key)) {
+							filter[key] = val;
+							store.set('config.services.filter', filter);
+						}
+
+						pars = [];
+						hasOff = false;
+						for(key in filter) {
+							if(filter[key] == 'on') {
+								pars.push(makeKey(key));
+							} else {
+								hasOff = true;
+							}
+						}
+
+						store.set('config.services.filterhas.off', hasOff);
+						store.set('config.services.filterpars', pars);
+					}
+
+					$('select', $page).bind('change', function(){
+						name = $(this).attr('name');
+						val = $(this).val();
+						setFilterParams(name, val);
+					});
+					
+				});
+			
+				function updateSelect() {
+					filter = store.get('config.services.filter');
+					for(key in filter) {
+						console.log('sel', $('select[name='+key+']', $page));
+						$('select[name='+key+']', $page).val(filter[key]).trigger('change');
+					}
+				}
+				
+				$page.live('pageshow', updateSelect);
+		});
+	</script>
+</div>
