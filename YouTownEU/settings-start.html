@@ -1,0 +1,64 @@
+<div id="settings-start" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="settings.html" data-role="button" data-icon="arrow-l">Back</a>
+		<h1 class="lang start-screen">Set Start Page</h1>
+		
+	</div>
+	<div data-role="content">
+		<ul data-role="listview" class="set-start">
+			<li><a href="#" class="lang home" data-data-uri="home.html">Home</a></li>
+			<li><a href="#" class="lang news" data-data-uri="news.html">News</a></li>
+			<li><a href="#" class="lang events" data-data-uri="events.html">Events</a></li>
+			<li><a href="#" class="lang maps" data-data-uri="maps.html">Maps</a></li>
+			<li><a href="#" class="lang services" data-data-uri="services.html">Services</a></li>
+		</ul>	
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#settings-start'), function($page) {
+			
+			
+			function resetSel() {
+				lis = $page.find('ul.set-start li');
+				lis.removeClass('selected');
+				spans = lis.find('span.ui-icon');
+				spans.removeClass('ui-icon-check');
+				spans.addClass('ui-icon-arrow-r');
+				console.log('lis', lis.find('span.ui-icon'));
+				
+			}
+			
+			resetSel();
+			
+			function setSel(start) {
+				$li = $page.find('ul.set-start a[data-data-uri="'+start+'"]').parent().parent().parent();
+				console.log('$li', $li);
+				$li.addClass('selected').find('span.ui-icon').removeClass('ui-icon-arrow-r').addClass('ui-icon-check');
+
+			}
+			
+			console.log($page.find('ul.set-start li').find('span.ui-icon'));
+			
+			$page.data('init-content', $page.find('div[data-role=content]').html());
+			$page.find('ul.set-start a').bind('vclick', function(){
+					resetSel();
+					setSel($(this).attr('data-data-uri'));
+				
+				store.set('config.startpage', [$(this).attr('data-data-uri'), $(this).text()]);
+				$.mobile.changePage('settings.html', {reloadPage: true});
+			});
+			
+			$page.live('pageshow', function(){
+				start = store.get('config.startpage') || null;
+				if(start == null) {
+					store.set('config.startpage', ['#home', "Home"]);
+					start = '#home';
+				} else {
+					start = start[0];
+				}
+				console.log('start', start);
+				resetSel();
+				setSel(start);
+			});
+		});
+	</script>	
+</div>

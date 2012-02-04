@@ -1,0 +1,44 @@
+<div id="maps-block-place" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="#" data-role="button" data-rel="back" data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1>Map</h1>
+		<a href="#" data-role="button" class="list-points" style="display:none;">List</a>
+	</div>
+	<div data-role="content">
+		Loading ...
+	</div>
+<script type="text/javascript" charset="utf-8">
+	pageScript($('#maps-block-place'), function($page){
+		//console.log('list', list, $('div[data-role="content"]', $page));
+		content = $('body').data('maps-block-place-content');
+		if(content == undefined || _.isEmpty(content)) {
+			$.mobile.changePage('maps.html', {reloadPage: true});
+			return;
+		}
+		
+		$page.find('div[data-role="content"]').html(content)
+			.promise()
+			.done(function(){
+					$cont = $('#maps-block-place div[data-role="content"]');
+					$head = $('#maps-block-place div[data-role="header"]');
+					$('h1', $head).html($('h2', $cont).text());
+					
+					setTimeout(function(){
+						makeIscroll($cont, 'maps-block-place-screw');
+						addMainFooter($page, 'maps');
+						
+					}, 400);
+			});
+		
+			$('#maps-block-place .iscroll-footer div.linkout a').live('vclick', function(ev){
+				ev.preventDefault();
+				
+
+				doLinkout({subject: $('#maps-block-place .info-box h2').text(), body: $('#maps-block-place .info-box p.body').text()}, false);
+
+			});
+		
+			
+	});
+</script>
+</div>

@@ -1,0 +1,76 @@
+<div id="settings" data-role="page">
+	<div data-role="header" class="main-header"  data-theme="b">
+		<a href="home.html" data-direction="reverse" data-role="button" data-icon="arrow-l">Back</a>
+		<h1 class="lang-parse">Settings</h1>
+	</div>
+	<div data-role="content">
+		<div id="screwme-settings" class="iscroll-wrapper">
+			<div class="iscroll-scroller">
+		
+			<h3 class="lang start-screen">Start screen</h3>
+			<a href="settings-start.html" class="start-screen lang-parse" data-role="button" data-icon="arrow-r" data-iconpos="right">Home</a>
+			<h3 class="lang-parse">Choose location</h3>
+			<a href="location.html" class="current-location" data-role="button" data-icon="arrow-r" data-iconpos="right">My Location</a>
+
+			<h3 class="lang-parse">Choose Language</h3>
+			<a href="settings-lang.html" class="current-lang" data-role="button" data-icon="arrow-r" data-iconpos="right">EN</a>
+			<h3 class="lang choose-time-format">Choose Time Format</h3>
+			<a href="settings-time.html" class="current-time" data-role="button" data-icon="arrow-r" data-iconpos="right">12-Hour</a>
+			<p>&nbsp;</p>
+			<p>&nbsp;</p>
+			
+			</div>
+		</div>	
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#settings'), function($page) {
+			$page.data('init-content', $page.find('div[data-role=content]').html());
+			
+			langsupp = store.get('config.language_support');
+			lang = store.get('config.language');
+			
+			$('#settings a.current-lang').text(langsupp[lang]);
+			
+			timef = store.get('config.timeformat');
+			$('#settings a.current-time').text(timef+'-Hour');
+			
+			myloc = store.get('config.location.set');
+			if(!_.isNull(myloc)) {
+				where = myloc.county;
+				if(_.isEmpty(where) || where == 'default') {
+					where = myloc.city;
+				} else {
+					where += ' County';
+				}
+				//console.log('where',where, myloc.city.indexOf(','), myloc);
+				if(!_.isEmpty(myloc.state) && myloc.city.indexOf(',') < 0) where += ', ' + myloc.state;
+				
+				 where += ', ' + myloc.country;
+				
+				//where = myloc.city;
+				//if(_.isEmpty(where)) where = myloc.county;
+				//if(!_.isEmpty(myloc.state)) where += ', ' + myloc.state;
+
+				place = where;
+				$page.find('a.current-location').html(place);
+				
+			}
+			start = store.get('config.startpage') || null;
+			if(start !== null) {
+				$page.find('a.start-screen').html(start[1]);	
+			}
+			
+		
+			
+			$page.live('pageshow', function(){
+					if(!$('body').hasClass('isBlackBerry')) {
+						window.myScrollSettingsPage = null;
+						window.myScrollSettingsPage = new iScroll('screwme-settings');
+					}
+					//makeIscroll($('#settings div[data-role=content]'), 'screwme-settings');
+				//addMainFooter($('#settings'));
+			});
+			
+		});
+	</script>	
+</div>

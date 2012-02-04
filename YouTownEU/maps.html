@@ -1,0 +1,178 @@
+<div id="maps" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="home.html" data-role="button" data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1>Maps</h1>
+	</div>
+	<div data-role="content">
+		<ul class="maps-list wrap-list" data-filter="true" data-filter-placeholder="Search Maps">
+		</ul>	
+	</div>
+	
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#maps'), function($page) {
+			//$('#home div[data-id=global-footer]').clone().appendTo($page);
+			//setActiveFooterNav($page, 'maps.html');
+			//addMainFooter($page);
+			updateLangPlaceholder('maps', $('#maps ul.maps-list'), 'search-maps');
+			
+			$page.data('init-content', $page.find('div[data-role=content]').html());
+			
+			
+			function addSearchEvent($page) {
+				filterForm = $('form.ui-listview-filter', $page);
+				if(!filterForm.hasClass('evAttach')) {
+					$page.data('filterForm', filterForm);
+					//console.log('addSearchEvent', $page.data('filterForm'));
+					filterForm.addClass('evAttach').bind('submit.filterFormAction', filterFormAction);
+				}
+			}
+			
+			function search(searchmap, callBack) {
+				myloc = store.get('config.location.set');
+				uri = API + 'maps/' + myloc.country + '/' + myloc.county + '/' + myloc.city + '/';
+				$('body').data('searched-map', searchmap);
+				params = {};
+				params.fullText = searchmap;
+				
+				$.getJSON(uri, params, function(data){
+					$page.addClass('maps-loading');
+					if(_.isFunction(callBack)) callBack(data, $page, top, true);
+				});
+			}
+			
+			function filterFormAction() {
+				searchmap = $(this).find('input[data-type=search]').val();
+				search(searchmap, createUL);
+				//console.log('filterForm submit');
+				return false;
+
+			}
+			
+			function resetContent($page) {
+				$page.find('div[data-role=content]').html($page.data('init-content'));
+			}
+			
+			function getFeed($page, callBack, count, top) {
+				myloc = store.get('config.location.set');
+				uri = API + 'maps/' + myloc.country + '/' + myloc.county + '/' + myloc.city + '/?num=50';
+				
+				params = {};
+				//params.num = count || 50;
+				
+				getJSONcached(uri, params, function(data){
+					$page.addClass('maps-loading');
+					if(_.isFunction(callBack)) callBack(data, $page, top);
+				});
+			}
+			
+			
+				function createList(data, $page, search) {
+					li = [];
+					//d = null;
+					d = $("body").data('maps-data') || {};
+					if(!_.isUndefined(search)) d = {}; 
+					//if(_.isNull(d)) d = {};
+					cl = '';
+					if(!_.isUndefined(search)) {
+						li.push('<li data-role="list-divider">Results for <em>'+$('body').data('searched-maps')+'</em></li>');
+						 cl = 'search';
+					}
+
+					var row, i;
+					mapdata = {};
+					
+					for(i=0; i< data.length; i++) {
+						row = data[i];
+						//console.log('s', row );
+						idid = row.guid; //(cl == 'search') ? row.guid : row.id;
+						mapdata[idid] = row;
+						//console.log('id', idid, cl, row.guid);
+						img = '<img src="'+CITYLIFE_BASE_URL+row.image.image_url+'" class="ui-li-icon" />';
+						title = '<span class="title">'+row.title+'</span><br />';
+						summary = '<span class="summary">'+row.summary+'</span>';
+					
+						li.push('<li class="'+cl+'"><a href="maps-block.html?id='+idid+'&_='+Math.random()+'" data-data-id="'+idid+'">'+img+title+summary+'</a></li>');
+						if(i> 24 && i%25 == 0) {
+							heading = 'result ' + (i + 1) + ' to ' + (i + 25);
+							li.push('<li data-role="list-divider">'+heading+'</li>');
+						}
+					}
+					store.set('jsondata.maps-data', mapdata);
+					$("body").data('maps-data', mapdata);
+
+					return li.join("");
+				}
+
+				function createUL(data, $page, top, search) {
+						resetContent($page);
+
+						$UL = $page.find('ul.maps-list');
+						$UL.attr('data-role', "");
+						$UL.html("");
+
+						list = createList(data, $page, search);
+						//next25 = 'Next 25';
+
+						nextnum = data.length + 25;
+						//if(_.isUndefined(search)) list += '<li class="next"><a href="#" data-next-num="'+nextnum+'" class="add-more">'+next25+'</a></li>';
+						//console.log(list);
+						$UL.html(list).promise().done(function(){
+							$page.find('form.ui-listview-filter').remove();
+							$UL.attr('data-role', "listview").listview().promise().done(function(){
+								$UL.trigger('create').promise().done(function(){
+									scrollto = 1; noscroll = false;
+									if(!_.isUndefined($('body').data('maps-last-id'))) {
+										aa = $UL.find('a[data-data-id="'+$('body').data('maps-last-id')+'"]');
+										if(aa.length > 0) {
+											scrollto = aa.offset().top;
+											if($(':visible', aa)) {
+												noscroll = true;
+											} else {
+												scrollto = scrollto / 2;
+											}
+										} 
+									}
+									
+										makeIscroll($('#maps div[data-role=content]'), 'maps-screw', {
+											pullDownAction: function(i){
+												getFeed($page, createUL, 25);
+											} 
+										});
+										
+									//console.log('scrollto', scrollto);
+									if(!noscroll) scrollto = 1; 
+									//$(window).scrollTop(0);
+									
+								});
+								$.mobile.hidePageLoadingMsg();
+
+								addSearchEvent($page);
+
+								
+								
+								$('li.next a.add-more', $UL).bind('vclick', function(){
+									//$UL.attr('data-role', "");
+									top = $(this).offset().top;
+									//console.log('pass top', top);
+									$.mobile.showPageLoadingMsg();
+									nextnum = $(this).attr('data-next-num');
+									$('body').data('maps-last-num', nextnum);
+									getFeed($page, createUL, nextnum, top);
+								});
+								updateLang('maps');
+							}); 
+						})
+					}
+
+
+					$page.live('pageshow', function(){
+						$.mobile.hidePageLoadingMsg();
+						addMainFooter($('#maps'));
+					});
+					num = $('body').data('maps-last-num') || 25;
+					if(!$page.hasClass('maps-loading')) getFeed($page, createUL, num);
+			
+
+		});
+	</script>	
+</div>

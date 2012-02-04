@@ -1,0 +1,97 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+	<title>YouTown</title> 
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+	<link rel="stylesheet" href="lib/jquery.mobile-1.0b2/jquery.mobile-1.0b2.min.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	
+	<link rel="stylesheet" href="css/main.css?_=000s111312asd9210" />
+	<script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
+	<script type="text/javascript" charset="utf-8">
+		$(document).bind("mobileinit", function(){
+		      $.mobile.defaultPageTransition = 'none';
+		      $.mobile.defaultDialogTransition = 'none';
+		      $.mobile.useFastClick = true;
+		});
+	</script>
+	<script src="lib/jquery.mobile-1.0b2/jquery.mobile-1.0b2.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/underscore.min.js?_=00009200" type="text/javascript" charset="utf-8"></script>
+	<script src="js/dateformatter.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/date_format.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript" src="js/main.js?_=004156x0"></script>
+	<script src="http://maps.google.com/maps/api/js?sensor=true" type="text/javascript"></script>
+	<script type="text/javascript" src="js/jquery-ui-map.js"></script>
+	<script src="lib/iscroll/iscroll.js?_=s" type="text/javascript" charset="utf-8"></script>
+	
+
+</head> 
+<body>
+<div id="cont">	 
+	<div id="splash" data-role="page" data-theme="b">
+		<div data-role="content">
+			<p style="margin-top: 200px; background: transparent;" class="check-loc">Checking Location ...</p>
+			<p style="margin-top: 200px; background: transparent;" class="check-loc-next">
+				Location need to be set<br />
+				<a href="location.html?=" data-role="button">
+						Set Location
+				</a>
+			</p>
+			<p style="margin-top: 230px; font-weight: normal; background: transparent; display: none; text-align: center;" class="has-loc">
+				<span class="lang choose-location" style="font-size: 11px;">CHOOSE YOUR LOCATION</span>
+				<a href="location.html" class="myloc lang my-location" data-role="button" data-icon="arrow-r" data-iconpos="right">My Location</a>
+				<a href="location.html" class="lang other-location"  data-role="button" data-icon="arrow-d" data-iconpos="right">
+						Other location
+				</a>
+			</p>
+			<p class="www"><a href="http://www.youtown.com" rel="external" target="_blank">www.youtown.com</a></p>
+		</div>	
+	</div>
+	
+
+<div id="iscroll-footer-tpl" style="display:none;">
+		<div data-role="footer" data-id="global-footer" class="" style="width: 100% important! position: absolute; bottom: 0; left:0; height: 48px;">
+			<div class="ui-grid-d footer-links">
+				<a class="ui-block-a" href="home.html">
+					<img class="blue" src="img/home-small-blue-checked.png" width="48" height="48" alt="Home Small" />
+					<img class="black" src="img/home-small.png" width="48" height="48" alt="Home Small" />
+					<span class="lang-parse">Home</span>
+				</a>
+				<a class="ui-block-b" href="news.html">
+					<img class="blue" src="img/news-small-blue.png" width="48" height="48" alt="News Small" />
+					<img class="black" src="img/news-small.png" width="48" height="48" alt="News Small" />
+					<span class="lang-parse">News</span>
+				</a>
+				<a class="ui-block-c" href="events.html">
+					<img class="blue" src="img/events-small-blue.png" width="48" height="48" alt="Events Small" />
+					<img class="black" src="img/events-small.png" width="48" height="48" alt="Events Small" />
+					<span class="lang-parse">Events</span>
+				</a>
+				<a class="ui-block-d" href="maps.html">
+					<img class="blue" src="img/maps-small-blue.png" width="48" height="48" alt="Maps Small" />
+					<img class="black" src="img/maps-small.png" width="48" height="48" alt="Maps Small" />
+					<span class="lang-parse">Maps</span>
+				</a>
+				<a class="ui-block-e" href="services.html">
+					<img class="blue" src="img/services-small-blue.png" width="48" height="48" alt="Services Small" />
+					<img class="black" src="img/services-small.png" width="48" height="48" alt="Services Small" />
+					<span class="lang-parse">Services</span>
+				</a>
+			</div>
+			<div class="linkout" style="text-align: right; padding-right: 15px; padding-top: 10px;">
+				<a href="#"><img class="" src="img/linkout.png" width="32" height="32" alt="out" /></a>
+			</div>	
+		</div>
+
+</div>
+<div id="linkout-cont" style="display:none;">
+	<div style="margin: 5px 10px;">
+		<a href="#" class="email" data-role="button">E-Mail</a>
+		<a href="#" class="safari" data-role="button" rel="external">Open in browser</a>
+		<a href="#" class="cancel" data-role="button" data-theme="a">Cancel</a>
+	</div>
+</div>		
+
+
+</div>
+</body>
+</html>

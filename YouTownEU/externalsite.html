@@ -1,0 +1,38 @@
+<div id="external-site" data-role="page"  data-dom-cache="false">
+	<div data-role="header"  class="main-header" data-theme="b">
+		<a href="#" data-role="button" data-rel="back"  data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1>View Webpage</h1>
+	</div>
+	<div data-role="content" style="background: #fff; padding:0;">
+		<iframe src="#" border="0" height="340" width="100%" class="article">
+		</iframe>
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		$.mobile.showPageLoadingMsg();
+		pageScript($('#external-site'), function($page) {
+			$.mobile.showPageLoadingMsg();
+			function get_url(uri) {
+				return uri.split('externalsite.html?url=')[1];
+			}
+			//alert($page.attr('data-url'));
+			
+			url = get_url($page.attr('data-url'));
+			if(url.indexOf('%253A') > -1) {
+				src = unescape(unescape(url));
+				
+			} 
+			if(url.indexOf('%3A') > -1) {
+				src = unescape(url);
+			}
+			if(url.indexOf('://') > -1) {
+				src = url;
+			}
+			
+			console.log('LOAD IFRAME', url, src);
+			
+			
+			$page.find('iframe').attr('src', src);
+
+		});
+	</script>
+</div>

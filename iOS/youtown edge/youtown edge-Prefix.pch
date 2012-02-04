@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'youtown edge' target in the 'youtown edge' project
+//
+
+#ifdef __OBJC__
+    #import <UIKit/UIKit.h>
+#endif

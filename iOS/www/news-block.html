@@ -1,0 +1,266 @@
+<div id="news-block" data-role="page"  data-dom-cache="false">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="news.html" data-role="button" data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1>News</h1>
+		<span data-role="controlgroup" data-type="horizontal" class="next-prev" style="">
+			<a href="#" class="prev" data-role="button"><img src="img/arrow_up.png"  height="10" alt="Arrow Down"></a>
+			<a href="#" class="next"  data-role="button"><img src="img/arrow_down.png" height="10" alt="Arrow Down"></a>
+		</span>	
+		
+	</div>
+	<div data-role="content">
+		
+		
+	</div>
+	<div id="alchemy-content"></div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#news-block'), function($page) {
+			//$page.live('pagebeforecreate', function(){
+			
+				//$('#home div[data-id=global-footer]').clone().appendTo($page);
+				//setActiveFooterNav($page, 'news.html');
+				//console.log($page);
+				//addMainFooter($page, 'news');
+				
+				$page.live('pageshow', function(){
+					if($('#news-block').hasClass('attachv')) return;
+					
+					$('#news-block').addClass('attachv');
+					
+					//id = $page.attr('data-url').split('?id=')[1];
+					id = getParams(location.href, 'id');
+					//id = $page.attr('data-url').split('?id=')[1];
+					$('body').data('news-last-id', id);
+					news = $('body').data('news-data');
+					if(_.isUndefined(news)) {
+						news = store.get('jsondata.news-data');
+						//$.mobile.changePage('news.html', {reloadPage: true});
+					}
+					ndata = news[id];
+					console.log('news data', news, ndata, id);
+					
+				
+					
+										
+					tpl = [
+						'<div class="news-block info-box ui-corner-all">',
+						'<h2><%= news.title %></h2>',
+						'<p><span><span class="lang-parse">By</span>: <%= news.feedName %></span><br /> <span><span class="lang updated">Updated</span>: <%= news.__parsedate %></span></p>',
+						'<p class="body upcontent"><%= news.body %></p>',
+						'</div>',
+						//'<% alert(data.link); %>',
+						'<% if(data.link != undefined && !_.isEmpty(data.link)) { %>',
+						'<a href="<%= data.link  %>" rel="external" target="_blank" class="read-full lang read-full-article" data-role="button" data-icon="arrow-r" data-iconpos="right">Read full article</a>',
+						'<% } %>',
+						
+						'<div id="linkout-cont2" style="display:none;">',
+							'<a href="#" class="email lang email-friend" data-role="button" data-icon="arrow-r" data-iconpos="right"><img src="img/18-envelope.png" height="12" alt="18 Envelope" style="margin-right: 10px;"> E-Mail to friend</a>',
+							'<a href="#" class="safari" data-role="button" data-icon="arrow-r" data-iconpos="right" rel="external"><img src="img/globe_world_browser.png" height="14" alt="68 Paperclip" style="margin-right: 4px;"> Open in browser</a>',
+						'</div>',
+						
+						
+					].join("");
+
+					console.log('idid', id);
+					$.getJSON(API + 'news/', {id: id}, function(data){
+					
+						if(data[0] == null) {
+							newsCache = store.findKey('_0news');
+							store.delAll(newsCache);
+							console.log('stale data');
+
+							$.mobile.changePage('news.html', {reloadPage: true});
+						}
+						
+						dataTpl = data[0] || null;
+						
+						if(ndata == undefined) {
+							$.mobile.changePage('news.html', {reloadPage: true});
+						}
+						
+						console.log('xxtpData', dataTpl, data, this);	
+						
+						if(!_.isNull(dataTpl) && _.isNull(dataTpl.link)) {
+							data[0].link = '';
+							dataTpl.link = '';
+						}
+						
+						
+						
+						tz = ndata.publishdate_local.split(" ")[2] || '';
+						
+						pdateloc_ = ndata.publishdate_local.split(" ");
+						pdateloc = [pdateloc_[0], pdateloc_[1]].join(" ");
+
+						fixedDateArr = pdateloc.split("/");
+						fixedDate = Date.parse([fixedDateArr[1], fixedDateArr[0], fixedDateArr[2]].join("/"));
+						pdate = getCalendarDate(fixedDate *1, true, true) + ' at ' + getClockTime(fixedDate*1);
+						pdate += ' ' + tz;
+						
+						pdate = formatDateTime(getCalendarDate(fixedDate *1, true, true), getClockTime(fixedDate*1), tz);
+						
+						
+						ndata['__parsedate'] = pdate;
+						 
+						tpData = {news: ndata, data: dataTpl};
+						
+						function alchemySwitch(url) {
+							nurl = 'external2.php?_=' + escape(url);
+							setTimeout(function(){
+								origContent = $('#news-block div.news-block p.body').html();
+								console.log('p-body', $('#news-block p.upcontent'));
+								$('#news-block div.news-block p.body').load(nurl, function(resp){
+									console.log('a', resp.indexOf('no-content-from-api'), resp);
+									if(resp.indexOf('no-content-from-api') > -1) {
+										$('#news-block div.news-block p.body').html(origContent);
+									} else {
+										console.log('alchemySwitch');
+										$('#news-block a.read-full').hide();
+									}
+									
+								});
+							}, 1);
+							
+						}
+						function alchemySwitch2(url, cb) {
+							$.mobile.showPageLoadingMsg();
+							nurl = 'external2.php?_=' + escape(url);
+							$('#news-block #alchemy-content').load(nurl, function(resp){
+								if(resp.indexOf('no-content-from-api') > -1) {
+									$('#news-block #alchemy-content').addClass('dontuse')
+										.promise()
+										.done(function(){
+											if(cb != undefined) cb();
+										});
+								} else {
+									if(cb != undefined) cb();
+								}
+								 
+								
+							});
+							
+						}
+						
+						
+						console.log('tpData', tpData);
+						function doContent() {
+							console.log('doContent tpData', tpData);
+							alchemyContent = false;
+							if(!$('#news-block #alchemy-content').hasClass('dontuse') && !_.isEmpty($('#news-block #alchemy-content').html())) {
+								tpData.news.body = $('#news-block #alchemy-content').html();
+								console.log('using alchemy content');
+								alchemyContent = true;
+							}
+							$('#news-block').find('div[data-role="content"]').html(_.template(tpl, tpData)).trigger('create')
+								.promise().done(function(){
+									console.log('kivk', $('#news-block div[data-role=content]'));
+								
+									//url = dataTpl.link;
+									//if(url != undefined || url != '') {
+									//	alchemySwitch(url);
+									
+									//}
+									$.mobile.hidePageLoadingMsg();
+									if(alchemyContent == true) $('#news-block a.read-full-article').hide();
+									
+									ah =  $('#news-block a.read-full');
+									if(ah.length > 0) {
+										link = ah.attr('href')  || false;
+									}
+
+									addLinkout({subject: $('#news-block .news-block h2').text(), body: $('#news-block .news-block p.body').text()}, link);
+								
+									//setTimeout(function(){
+										makeIscroll($('#news-block div[data-role=content]'), 'news-block-screw');
+									//}, 20);	
+								});
+							createNextPrev(ndata, news);	
+							updateLang('news-block');
+						}
+						
+						url = dataTpl.link;
+						enable_article_extraction = false;
+						enable_article_extraction = dataTpl.enable_article_extraction || null ;
+						console.log('enable_article_extraction', enable_article_extraction);
+						if((url != undefined || url != '') && (enable_article_extraction == true)) {
+							alchemySwitch2(url, doContent);
+						} else {
+							doContent();
+						}
+						
+						
+					});
+		
+				});
+				
+				$('a.read-full-x', $('#news-block')).live('click', function(ev){
+					ev.preventDefault();
+					href = $(this).attr('href');
+					$.mobile.changePage('external.html?url=' + escape(href));
+					
+				});
+				
+				
+				function createNextPrev(ndata, news) {
+					ctr = ndata.__ctr;
+
+					pre = 'news-block.html?id=';
+
+					ctrPrev = ctr - 1;
+					ctrNext = ctr + 1;
+					var prev, next;
+					if(ctrPrev > -1) {
+						prev = _.detect(news, function(r){ return r.__ctr == ctrPrev});
+						prevUrl = pre + prev.id;
+					} else {
+						prevUrl = '#'; 
+					}
+
+					next = _.detect(news, function(r){ return r.__ctr == ctrNext});
+					if(!_.isUndefined(next)) {
+						nextUrl = pre + next.id;
+					} else {
+						nextUrl = '#';
+					}
+
+					console.log('prevNext', ctrPrev, prev, ctrNext, next);
+
+
+
+					$('#news-block').find('span.next-prev a.prev').attr('href', prevUrl).bind('vclick', function(ev){
+						ev.preventDefault();
+						$this = $(this);
+						$('#news-block').removeClass('ev-attached');
+						$.mobile.changePage($this.attr('href'), {reloadPage: true});
+
+					});
+
+					$('#news-block').find('span.next-prev a.next').attr('href', nextUrl).bind('vclick', function(ev){
+						ev.preventDefault();
+						$this = $(this);
+						$('#news-block').removeClass('ev-attached');
+						$.mobile.changePage($this.attr('href'), {reloadPage: true});
+
+					});
+				}
+				
+				
+	
+			//});
+			console.log('vvv', $('#news-block .iscroll-footer a.linkout'));
+			$('#news-block .iscroll-footer div.linkout a').live('vclick', function(ev){
+				ev.preventDefault();
+				ah =  $('#news-block a.read-full');
+				link = ah.attr('href');
+				
+				doLinkout({subject: $('#news-block .news-block h2').text(), body: $('#news-block .news-block p.body').text()}, link);
+				
+			});
+			
+			$page.live('pageshow', function(){
+				//addMainFooter($page, 'news');
+				//$('body').addClass('no-footer');
+			});
+		});	
+	</script>		
+</div>

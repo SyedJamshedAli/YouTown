@@ -1,0 +1,89 @@
+<div id="maps-block-list" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="#" data-role="button" data-rel="back" data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1>Maps</h1>
+		<a href="#" data-role="button" class="list-points" style="display:none;">List</a>
+	</div>
+	<div data-role="content">
+		Loading ...
+	</div>
+<script type="text/javascript" charset="utf-8">
+	pageScript($('#maps-block-list'), function($page){
+		list = $('#maps-block div[data-role="content"] div.listbox').html();
+		id = getParams($page.attr('data-url') || location.href, 'id');
+		if(_.isEmpty(list)) {
+			$.mobile.changePage('maps-block.html?id='+id, {reloadPage: true});
+			return;
+		}
+		
+		console.log('list', list, $('div[data-role="content"]', $page));
+		$page.find('div[data-role="content"]').html(list + '<p>&nbsp;</p>')
+			.promise()
+			.done(function(){
+						$page.find('a.map-list-info').live('vclick', function(){
+							idid = $(this).attr('data-data-id');
+							jdata = store.get('maps-block-json-data');
+
+							console.log('jdata', jdata);
+							data = _.detect(jdata, function(row){
+								return row.id == idid;
+							});
+							console.log('click', data);
+
+
+
+							$page.find('div[data-role="header"] a[data-rel=back]').addClass('back-mapbox');
+
+							if(_.isUndefined(jdata)) {
+								$.getJSON(API + 'maps/', {id: id}, function(data){
+									createContent(data);
+								});	
+							} else {
+								createContent(data);
+							}
+
+							function createContent(data) {
+
+								daddr = [data.address.street, data.address.city, data.address.state, data.address.country, data.address.zipcode].join(" ");
+								pos = store.get('config.position');
+								saddr = pos.join(",");
+
+								content = '<div class="info-box ui-corner-all"><h2>'+data.title+'</h2>';
+								content += '<p>'+data.summary+'</p>'; 
+								content += '</div>'; 
+								content += '<div class="info-box address-box ui-corner-all">';
+								//content += '<img src="img/map.png" />';
+								content += '<p class="address-map-bg-icon">' + daddr + "</p>";
+								content += '</div>'; 
+								content += '<a data-role="button" href="http://maps.google.com/maps?saddr='+saddr+'&daddr='+daddr+'" rel="external" data-icon="arrow-l" data-iconpos="right">Directions to here</a>';
+								$('body').data('maps-block-place-content', content);
+								$('body').data('maps-block-place-back', 'maps-block-list.html?id='+id);
+								$.mobile.changePage('maps-block-place.html?backid='+id, {reloadPage: true});
+								return;
+								/*
+								placePage.done(function(){
+									$('#maps-block-place div[data-role="content"]').html(content).trigger('create');
+								});
+								*/
+								$('div[data-role="content"] div.info', $page).html(content).show().promise().done(function(){
+									$('div[data-role="content"] div.info a', $page).attr('rel', 'external').attr('target', '_blank');
+									$('div[data-role="content"]', $page).trigger('create');
+								});
+								$('div[data-role="content"] div.listbox', $page).hide();
+								$('div[data-role="content"]', $page).removeClass('mapbox-active').addClass('infobox-active');
+								$('body').removeClass('page-maps-block');
+								$('div[data-role="content"] div.mapbox', $page).hide();
+
+								//makeIscroll($('#maps-block div[data-role=content] div.info'), 'maps-block-info-screw');
+
+							}
+						});
+		
+					setTimeout(function(){
+						makeIscroll($('#maps-block-list div[data-role="content"]'), 'maps-block-list-screw');
+						addMainFooter($page, 'maps');
+					}, 400);
+			});
+	});
+</script>
+</div>

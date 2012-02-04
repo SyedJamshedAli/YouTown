@@ -1,0 +1,309 @@
+<div id="maps-block" data-role="page">
+	<div data-role="header" class="main-header"  data-theme="b">
+		<a href="maps.html" data-role="button" data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1>Maps</h1>
+		<a href="#" data-role="button" class="list-points" style="display:none;">List</a>
+	</div>
+	<div data-role="content">
+	</div>
+	<script type="text/javascript" charset="utf-8">
+	window.mapsScroll = makeIscroll($('#maps-block div[data-role=content]'), 'maps-block-screw');
+	
+		pageScript($('#maps-block'), function($page) {
+			$page.find('div[data-role="content"]').html('<div class="mapbox" style="width: 100%; height: 100%; margin: 0"></div><div class="listbox" style="display:none;"><ul class="maps-list wrap-list"></ul></div><div class="info" style="display:none;"></div>').promise().done(function(){
+				$page.data('init-content', $page.find('div[data-role=content]').html());
+			});
+			
+			//getId = getParams(location.href, 'id');
+			id = getParams($page.attr('data-url') || location.href, 'id');
+			$('body').data('maps-last-id', id);
+			maps = $('body').data('maps-data') || store.get('jsondata.maps-data');
+			
+			
+			
+			if(_.isUndefined(maps) || _.isNull(maps)) {
+				$.mobile.changePage('maps.html', {reloadPage: true});
+				return;
+			}
+			pageMapData = maps[id];
+			$page.find('div[data-role=header] h1').html(pageMapData.title);
+			
+			mapEl = $($page.find('div[data-role="content"] div.mapbox').get(0));
+			mapEl.height(($('body').height()*1) - 40);
+			//console.log('mapEl', mapEl);
+			
+			function makeBorderMap(mapEl, data) {
+				//$.mobile.showPageLoadingMsg();
+				$map = $(mapEl);
+				lines = data[0].lines;
+				//console.log('line', lines);
+				bounds = new google.maps.LatLngBounds();
+				//initCoor = new google.maps.LatLng(lines.coordinates[0]['latitude'], lines.coordinates[0]['longitude']); 
+				$map.gmap({
+					zoomControl: true,
+					zoomControlOptions: {
+					     style: google.maps.ZoomControlStyle.DEFAULT,
+						position: google.maps.ControlPosition.LEFT_TOP
+					},
+					mapTypeControl:  false,
+					streetViewControl: false,
+					//center: initCoor,
+					zoom: 10,
+					callback: function(map){
+					
+					function pathMaker(liner, map, bounds) {
+						var pathCoordinates = new google.maps.MVCArray();
+						for(i = 0; i < liner.coordinates.length; i++) {  
+						// each coordinate is put into a LatLng. 
+							var latlng = new google.maps.LatLng(liner.coordinates[i]['latitude'], liner.coordinates[i]['longitude']); 
+							pathCoordinates.insertAt(i,latlng); 
+							bounds.extend(latlng);
+						} 
+						
+						// and this is where we actually draw it. 
+						var polyOptions = { 
+						path: pathCoordinates, 
+						strokeColor: '#000000', 
+						strokeOpacity: 1.0, 
+						strokeWeight: 2
+						
+						};
+
+						poly = new google.maps.Polyline(polyOptions); 
+						poly.setMap(map);
+
+						map.fitBounds(bounds);
+					}
+					
+					_.each(lines, function(liner){
+						pathMaker(liner, map, bounds); 
+					});
+					
+					var listener = google.maps.event.addListener(map, "idle", function() { 
+				               map.fitBounds(bounds);
+				               google.maps.event.removeListener(listener); });
+					var listener2 = google.maps.event.addListener(map, "tilesloaded", function() { 
+			               $.mobile.hidePageLoadingMsg();
+			               google.maps.event.removeListener(listener2); });
+					
+				}});	
+
+				
+			}
+			
+			function makeMarkerMap(mapEl, markers, markerCallback) {
+				$.mobile.showPageLoadingMsg();
+				var infowindow = new google.maps.InfoWindow();
+				$map = $(mapEl);
+				$ul = $('div.listbox ul', $map.parent());
+				initpos = markers[0].coordinates.split(",");
+				initCoor = new google.maps.LatLng(initpos[0], initpos[1]); 
+				
+				$map.gmap({
+					zoomControl: true,
+					zoomControlOptions: {
+					     style: google.maps.ZoomControlStyle.DEFAULT,
+						position: google.maps.ControlPosition.LEFT_TOP
+					},
+					mapTypeControl:  false,
+					streetViewControl: false,
+					center: initCoor,
+					zoom: 10,
+					callback: function(map){
+					var markerBounds = new google.maps.LatLngBounds();
+					redMarkerImg = new google.maps.MarkerImage('img/red-dot2.png');
+					li = [];
+					_.each(markers, function(marks){
+						if(!_.isEmpty(marks.coordinates)) {
+							// if dog leash map
+							title = '<span class="title">'+marks.title+'</span>';
+							img = '<img src="'+CITYLIFE_BASE_URL+marks.image.image_url+'" class="ui-li-icon" />';
+							licontent = '<a href="#" class="map-list-info" data-data-id="'+marks.id+'">'+img+title+'</a>';
+							
+							li.push('<li class="">'+licontent+'</li>');
+							pos = marks.coordinates.split(",");
+							//console.log('pos', pos);
+							mpos = new google.maps.LatLng(pos[0], pos[1]);
+							markerBounds.extend(mpos);
+							content = '<a href="#" class="map-list-info" data-data-id="'+marks.id+'">'+marks.title+'</a>';
+							$map.gmap('addMarker', {
+								position: mpos,
+								'title': marks.title,
+								'zIndex': 10,
+								icon: redMarkerImg,	
+								bubble: infowindow,
+								content: content
+								},
+								markerCallback
+							);
+						}
+					});
+					var listener = google.maps.event.addListener(map, "idle", function() { 
+				               map.fitBounds(markerBounds);
+				               google.maps.event.removeListener(listener); });
+					var listener2 = google.maps.event.addListener(map, "tilesloaded", function() { 
+			               $.mobile.hidePageLoadingMsg();
+			               google.maps.event.removeListener(listener2); });
+					
+					$ul.html(li.join("")).attr('data-role', 'listview').addClass('wrap-list');
+					$ul.listview(); //trigger('refresh');
+					
+					
+				}
+				});
+			}
+			
+			function makerMaker(map, marker) {
+				google.maps.event.addListener(marker, 'click', function(e) {
+					infowindow = this.bubble;
+				    infowindow.setContent(this.content);
+					map.panTo( this.getPosition() );
+				    infowindow.open(map, this);
+				 });
+			}
+			
+			$.mobile.showPageLoadingMsg();
+			getJSONcached(API + 'maps/', {id: id}, function(data){
+				$page.data('json-data', data);
+				store.set('maps-block-json-data', data);
+				//console.log(data);
+				if(!data || _.isNull(data[0])) {
+					$(mapEl.parent()).html('<p class="map-error">Map not found.</p>');
+				} else {
+					if(data[0].lines[0].coordinates.length > 0) {
+						makeBorderMap(mapEl, data);
+						$page.find('div[data-role="header"] a.list-points').hide();
+						//console.log('makeBorderMap');
+					} else {
+						//console.log('makeMarkerMap');
+						$page.find('div[data-role="header"] a.list-points').show();
+						makeMarkerMap(mapEl, data, makerMaker);
+					}
+				}
+				
+			});
+			
+			listboxIscroll = null;
+			
+			$page.find('div[data-role="header"] a.list-points').bind('vclick', function(ev){
+				ev.preventDefault();
+				$cont = $('div[data-role="content"]', $page);
+				
+				$.mobile.changePage('maps-block-list.html?id='+id, {reloadPage: true});
+				
+				return;
+				
+			/*	console.log('list clicked', $cont);
+				
+				if($cont.hasClass('mapbox-active') || $cont.hasClass('infobox-active')) {
+					
+					$('div[data-role="content"] div.listbox', $page).show();
+					//if(!_.isNull(listboxIscroll) && !_.isUndefined(listboxIscroll) ) {
+					//	listboxIscroll.refresh();	
+					//} else {
+					//	listboxIscroll = makeIscroll($('#maps-block div[data-role=content] div.listbox'), 'maps-block-screw');
+					//	addMainFooter($page, 'maps');
+					//}
+					
+					$('div[data-role="content"] div.mapbox', $page).hide();
+					$('div[data-role="content"] div.info', $page).hide();
+					$cont.removeClass('mapbox-active').removeClass('infobox-active');
+					$('body').removeClass('page-maps-block');
+					$page.find('div[data-role="header"] a[data-rel=back]').addClass('back-mapbox');
+				} else {
+					$('div[data-role="content"] div.info', $page).hide();
+					$('div[data-role="content"] div.listbox', $page).hide();
+					$('div[data-role="content"] div.mapbox', $page).show();
+					$cont.addClass('mapbox-active').removeClass('infobox-active');
+					$('body').addClass('page-maps-block');
+				}
+					window.mapsScroll.refresh();
+				*/	
+			});
+			/*
+			$page.find('a.back-mapbox').live('vclick', function(ev){
+				ev.preventDefault();
+				ev.stopPropagation();
+				$page.find('div[data-role="header"] a.list-points').trigger('vclick');
+				return false;
+			});	
+			*/
+			$page.find('a.map-list-info').live('vclick', function(){
+				idid = $(this).attr('data-data-id');
+				jdata = $page.data('json-data');
+				//console.log('jdata', jdata);
+				data = _.detect(jdata, function(row){
+					return row.id == idid;
+				});
+				//console.log('click', data);
+				
+				$cont = $('div[data-role="content"]', $page);
+				if($cont.hasClass('mapbox-active')) {
+					backClass = 'mapbox';
+				} else {
+					backClass = 'list';
+				}
+				
+				$page.find('div[data-role="header"] a[data-rel=back]').addClass('back-mapbox');
+				
+				if(_.isUndefined(jdata)) {
+					getJSONcached(API + 'maps/', {id: id}, function(data){
+						createContent(data);
+					});	
+				} else {
+					createContent(data);
+				}
+				
+				function createContent(data) {
+					
+					daddr = [data.address.street, data.address.city, data.address.state, data.address.country, data.address.zipcode].join(" ");
+					pos = store.get('config.position');
+					saddr = pos.join(",");
+					
+					content = '<div class="info-box ui-corner-all"><h2>'+data.title+'</h2>';
+					content += '<p class="body">'+data.summary+'</p>'; 
+					content += '</div>'; 
+					content += '<div class="info-box address-box ui-corner-all">';
+					//content += '<img src="img/map.png" />';
+					content += '<p class="address-map-bg-icon">' + daddr + "</p>";
+					content += '</div>'; 
+					content += '<a data-role="button" href="http://maps.google.com/maps?saddr='+saddr+'&daddr='+daddr+'" rel="external" data-icon="arrow-l" data-iconpos="right">Directions</a>';
+					$('body').data('maps-block-place-content', content);
+					$.mobile.changePage('maps-block-place.html', {reloadPage: true});
+					return;
+					/*
+					placePage.done(function(){
+						$('#maps-block-place div[data-role="content"]').html(content).trigger('create');
+					});
+					*/
+					$('div[data-role="content"] div.info', $page).html(content).show().promise().done(function(){
+						$('div[data-role="content"] div.info a', $page).attr('rel', 'external').attr('target', '_blank');
+						$('div[data-role="content"]', $page).trigger('create');
+					});
+					$('div[data-role="content"] div.listbox', $page).hide();
+					$('div[data-role="content"]', $page).removeClass('mapbox-active').addClass('infobox-active');
+					$('body').removeClass('page-maps-block');
+					$('div[data-role="content"] div.mapbox', $page).hide();
+					
+					//makeIscroll($('#maps-block div[data-role=content] div.info'), 'maps-block-info-screw');
+					
+				}
+			});
+			$page.bind('pageshow', function(){
+					//mapsScroll.refresh();
+				h = $page.css('min-height').replace("px", "") * 1;
+				hh = $page.find('div[data-role="header"]').height();
+				mh = ($('body').height() *1) + 14;
+				content = $page.find('div[data-role="content"]');
+				$map = $page.find('div[data-role="content"] div.mapbox');
+				content.addClass('mapbox-active'); //css({'padding':0, 'margin':0});
+				$map.css({'height': mh});
+				//console.log('hh', mh, h, hh, $('body').height());
+				google.maps.event.trigger($map, 'resize');
+			}).live('pagehide', function(){
+				cont = $page.data('init-content');
+				$page.find('div[data-role="content"]').html(cont);
+			});
+		});
+	</script>	
+</div>

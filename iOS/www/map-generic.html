@@ -1,0 +1,18 @@
+<div id="map-generic" data-role="page">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="#" data-role="button" data-rel="back" data-icon="arrow-l">Back</a>
+		<h1>&nbsp;</h1>
+	</div>
+	<div data-role="content">
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#map-generic'), function($page) {
+			$('#home div[data-id=global-footer]').clone().appendTo($page);
+			//setActiveFooterNav($page, 'maps.html');
+			//$page.data('init-content', $page.find('div[data-role=content]').html());
+			$page.find('div[data-role="content"]').html('<div class="mapboxgen" style="width: 100%; height: 100%; margin: 0"></div>').promise().done(function(){
+				$page.data('init-content', $page.find('div[data-role=content]').html());
+			});
+		});
+	</script>	
+</div>

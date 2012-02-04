@@ -1,0 +1,185 @@
+<div id="home" data-role="page" data-cache="false">
+	<div data-role="header" class="main-header">
+		<img src="img/logo.png" width="118" height="29" alt="Logo" style="margin-top: 8px;">
+	</div>
+		
+	<div data-role="content">
+		<div>
+		<div class="ui-grid-b grid-links">
+			<div class="ui-block-a">
+				<a href="news.html">
+					<img src="img/news.png" width="63" height="70" alt="News">
+					<span class="lang-parse">News</span>
+				</a>
+			</div>
+			<div class="ui-block-b">
+				<a href="events.html">
+					<img src="img/events.png" width="63" height="70" alt="Events">
+					<span class="lang-parse">Events</span>
+				</a>
+			</div>
+			<div class="ui-block-c">
+				<a href="maps.html">
+					<img src="img/maps.png" width="63" height="70" alt="Maps">
+					<span class="lang-parse">Maps</span>
+				</a>
+			</div>
+			
+		</div>
+
+		<div class="ui-grid-b grid-links">
+			<div class="ui-block-a">
+				<a href="services.html">
+					<img src="img/services.png" width="63" height="70" alt="Services">
+					<span class="lang-parse">Services</span>
+				</a>
+			</div>
+			<div class="ui-block-b">
+				<a href="settings.html">
+					<img src="img/settings.png" width="65" height="72" alt="Settings">
+					<span class="lang-parse">Settings</span>
+				</a>
+			</div>
+			<div class="ui-block-c">
+				&nbsp;
+			</div>
+		</div>
+		<div id="caller-caller" style="display:none"></div>
+		</div>
+	</div>	
+
+<script type="text/javascript" charset="utf-8">
+	pageScript($('#home'), function($page){
+		$page.data('init-content', $page.find('div[data-role=content]').html());
+		
+		
+		function updateHeadTitle($page) {
+			myloc = store.get('config.location.set');
+			console.log(myloc);
+			if(!_.isNull(myloc)) {
+				where = myloc.county;
+				if(_.isEmpty(where) || where == 'default') {
+					where = myloc.city;
+				} else {
+					where += ' County';
+				}
+				console.log('where',where, myloc.city.indexOf(','), myloc);
+				if(!_.isEmpty(myloc.state) && myloc.city.indexOf(',') < 0) where += ', ' + myloc.state;
+				
+				 //where += ', ' + myloc.country;
+				
+				//where = myloc.city;
+				//if(_.isEmpty(where)) where = myloc.county;
+				//if(!_.isEmpty(myloc.state)) where += ', ' + myloc.state;
+
+				place = where;
+				
+				$page.find('div[data-role=header]').html('<h1>'+place+'</h1>');
+			}	
+		}
+		updateHeadTitle($page);
+		
+		function getLiveFeed($page, callBack, count, top) {
+			myloc = store.get('config.location.set');
+			
+			uri = API + 'livefeed/' + myloc.country + '/' + myloc.county + '/' + myloc.city + '/';
+
+			params = {};
+			params.num = count || 25;
+			getJSONcached(uri, params, function(data){
+				$page.addClass('events-loading');
+				if(_.isFunction(callBack)) callBack(data, $page, top);
+			});
+		}
+		
+		
+		if($('#callcenter').length < 1) {       
+         getLiveFeed($page, function(data){
+                     call = data.callInfo || null;
+                     
+                     //call = {buttonCaption: 'yea'};
+                     console.log('LIVEFEED', data, call);
+                     
+                     if(call != null && (call.phoneNumber != undefined && call.buttonCaption != undefined && call.phoneNumber != '' && call.buttonCaption != '')) {
+                     $('#caller-caller').append('<div id="callcenter" style="text-align: center; margin: 0 auto !important;"><a href="tel:'+call.phoneNumber+'" data-role="button" data-inline="true" data-theme="f"> <img src="img/75-phone-white.png" height="20" /> <span class="caption">'+call.buttonCaption+'</span></a></div>').promise().done(function(){ $(this).trigger('create');
+hh = $(document).height();
+
+t = hh - 170; 
+if($('body').hasClass('isApp')) {
+	t = t + 70;
+}
+console.log(hh, t);
+$(this).css({position: 'absolute', 'text-align': 'center', top: t, margin: "0 auto", width: "100%"}).show();                                                                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                               });
+                                                
+                    /* $page.find('div.iscroll-footer').prepend('<div id="callcenter"><a href="tel:'+call.phoneNumber+'" data-role="button" data-inline="true" data-theme="f"> <img src="img/75-phone-white.png" height="20" /> <span class="caption">'+call.buttonCaption+'</span></a></div>').promise().done(function(){ $(this).trigger('create'); });
+                     */
+                     
+                     }
+                     
+                     
+                     });
+         }
+         
+        
+		//addMainFooter($('#home'), 'home', true);
+		/*$page.append($('#iscroll-footer-tpl').html()).promise().done(function(){
+			$('#home .iscroll-footer').attr('data-position', 'fixed').addClass('main-footer-blue').attr('data-id', 'home-footer-only');
+		});
+		*/
+	//	setTimeout(function(){
+			
+			
+	//	}, 600);
+		//$page.live('pagecreate', function(){
+		//alert($('#home div[data-role=content]'));	
+		//makeIscroll($('#home div[data-role=content]'), 'screwme-home', function(scroll){
+		//	addMainFooter($('#home'), 'home');
+		//});
+		//addMainFooter($page);
+		
+		//});
+		makeIscroll($('#home div[data-role=content]'), 'screwme-home');
+		$page.live('pageshow', function(){
+			//alert('v');
+			addMainFooter($('#home'), 'home');
+			//hide footer only; callbutton is dependent on it; 
+			setTimeout(function(){
+				$('#home .main-footer-blue').hide();
+			}, 10);
+			
+			/* //for call button testing only
+			call = {buttonCaption: 'yea'};
+			console.log('LIVEFEED', data, call);
+			
+			if(call != null || (call.phoneNumber == undefined || call.button == undefined)) {
+				$page.find('div.iscroll-footer').prepend('<div id="callcenter"><a href="tel:'+call.phoneNumber+'" data-role="button" data-inline="true" data-theme="f"> <img src="img/75-phone.png" height="20" class="phone-icon" /> <span class="caption">'+call.buttonCaption+'</span></a></div>').promise().done(function(){ $(this).trigger('create'); });
+			}
+			
+			*/
+			/*
+			getLiveFeed($page, function(data){
+				call = data.callInfo || null;
+				
+				//call = {buttonCaption: 'yea'};
+				console.log('LIVEFEED', data, call);
+				
+				if(call != null && (call.phoneNumber != undefined && call.buttonCaption != undefined && call.phoneNumber != '' && call.buttonCaption != '')) {
+					$page.find('div.iscroll-footer').prepend('<div id="callcenter"><a href="tel:'+call.phoneNumber+'" data-role="button" data-inline="true" data-theme="f"> <img src="img/75-phone-white.png" height="20" /> <span class="caption">'+call.buttonCaption+'</span></a></div>').promise().done(function(){ $(this).trigger('create'); });
+
+				}
+
+
+			});
+			*/
+			
+			//setTimeout(function(){
+			//	alert($(document).height() + ' ' + $page.height() +' ' +$('#home div[data-role="content"]').height() +' '+ $page.find('.iscroll-wrapper').height());
+			//}, 3000);	
+			//$('#news').trigger('refresh');
+		});
+		
+		
+	});
+</script>
+</div>

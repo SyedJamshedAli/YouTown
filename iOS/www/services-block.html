@@ -1,0 +1,216 @@
+<div id="services-block" data-role="page" data-dom-cache="false">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="services.html" data-role="button" data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1 class="lang services">Services</h1>
+		<span data-role="controlgroup" data-type="horizontal" class="next-prev" style="">
+			<a href="#" class="prev" data-role="button"><img src="img/arrow_up.png"  height="10" alt="Arrow Down"></a>
+			<a href="#" class="next"  data-role="button"><img src="img/arrow_down.png" height="10" alt="Arrow Down"></a>
+		</span>	
+	</div>
+	<div data-role="content">
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#services-block'), function($page) {
+						//$page.removeClass('ev-attached');
+						//$('#home div[data-id=global-footer]').clone().appendTo($page);
+						//setActiveFooterNav($page, 'services.html');
+						$page.live('pageshow', function(){
+							if($('#services-block').hasClass('attachv')) return;
+							
+							$('#services-block').addClass('attachv');
+							console.log('must run all the time');
+							//id = getParams($('#services-block').attr('data-url'), 'id');
+							id = getParams(location.href, 'id');
+							console.log('must run all the time', id);
+
+							$('body').data('services-last-id', id);
+							services = $('body').data('services-data');
+							if(_.isUndefined(services)) {
+								services = store.get('jsondata.services-data');
+								//$.mobile.changePage('services.html', {reloadPage: true});
+							}
+							ndata = services[id];
+							
+							//console.log('services data', data);
+							tpl = [
+								'<div style="margin: 10px;">',
+								'<div class="services-block info-box ui-corner-all">',
+								'<h2><%= data.title %></h2><p class="body"><%= data.description %></p>',
+								'</div>',
+
+								//'<div class="services-block info-box ui-corner-all">',
+								//'<h3>Description</h3><p class="body"> <%= data.description %></p>',
+								//'</div>',
+								'<% if(!_.isEmpty(data.price)) { %>',
+									'<div class="services-block info-box ui-corner-all">',
+									'<h3 class="lang costs">Cost</h3><p><%= data.price %></p>',
+									'</div>',
+								'<% } %>',
+								
+								'<% if(!_.isEmpty(data.more_info_link) || !_.isEmpty(data.email)) { %>',
+									//'<div class="services-block info-box ui-corner-all">',
+									'<% if(!_.isEmpty(data.more_info_link)) { %>',
+								
+										'<p class="website" style="display:none;"><a href="<%= data.more_info_link %>" rel="external" target="_blank" class="read-full"><%= data.more_info_link %></a></p>',
+										
+											'<a href="<%= data.more_info_link %>" class="lang more-info safarix" data-role="button" data-icon="arrow-r" data-iconpos="right" rel="external"><img src="img/globe_world_browser.png" height="14" alt="68 Paperclip" style="margin-right: 4px;"> More Info</a>',
+											
+									'<% } %>',
+								
+									'<% if(!_.isEmpty(data.email)) { %>',
+										'<p class="email" style="display:none;"><a href="mailto:<%= data.email %>"><%= data.email %></a></p>',
+										'<a href="mailto:<%= data.email %>" class="lang email-department emailx" data-role="button" data-icon="arrow-r" data-iconpos="right"><img src="img/18-envelope.png" height="12" alt="18 Envelope" style="margin-right: 5px;">  E-Mail this department</a>',
+									
+									'<% } %>',
+									//'</div>',
+								'<% } %>',
+								
+								'<% if(!_.isEmpty(data.address[0].phone)) { %>',
+
+									//'<div class="services-block info-box ui-corner-all">',
+									//'<p class="group"><%= data.group %></p>',
+									'<a href="tel:<%= data.address[0].phone %>" data-icon="arrow-r" data-iconpos="right" data-role="button"><img src="img/75-phone.png" style="margin-right: 5px;" height="14" alt="75 Phone"> <%= data.address[0].phone %></a>',
+									//'</div>',
+								'<% } %>',
+								
+								//'<% if(!_.isEmpty(data.address[0].location)) { %>',
+									//'<div class="info-box address-box ui-corner-all">',
+									//'<p class="address-map-bg-icon">', 
+									//'<%= data.address[0].location %>', 
+									//'</p>',
+									//'</div>', 
+								//'<% } %>',
+								
+								'<% if(!_.isEmpty(data.address[0].location)) { %>',
+									'<div class="ui-grid-a">',
+									'<div class="ui-block-a">','<a data-role="button" href="http://maps.google.com/maps?q=<%= data.address[0].location %>" rel="external" class="lang map" data-icon="arrow-r" data-iconpos="right">',
+									//'<%= data.address[0].location %>', 
+									'Map',
+									'</a>', '</div>',
+									
+									'<div class="ui-block-b">','<a data-role="button" href="http://maps.google.com/maps?saddr=<%= data.saddr %>&daddr=<%= data.address[0].location %>" rel="external" class="lang directions" data-icon="arrow-r" data-iconpos="right">Directions</a>', '</div>',
+									'</div>',
+								'<% } %>',
+								
+								'<div id="linkout-cont2" style="display:none;">',
+									'<a href="#" class="email lang email-friend" data-role="button" data-icon="arrow-r" data-iconpos="right"><img src="img/18-envelope.png" height="12" alt="18 Envelope" style="margin-right: 5px;">  E-Mail to friend</a>',
+									//'<a href="#" class="safari" data-role="button" data-icon="arrow-r" data-iconpos="right" rel="external"><img src="img/globe_world_browser.png" height="14" alt="68 Paperclip" style="margin-right: 4px;"> Open in browser</a>',
+								'</div>',
+								
+								'</div>'
+							].join("");
+
+
+							$.getJSON(API + 'services/', {id: id}, function(data){
+								console.log('data ', data);
+								data = data[0] || data;
+								pos = store.get('config.position');
+								saddr = pos.join(",");
+								data.saddr = saddr;
+								
+								//console.error('ERROR', _.isUndefined(data.address[0]));
+								if(_.isUndefined(data.address[0])) {
+									data.address = [{phone: '', location: ''}];
+									
+									//data.address[0].phone = '';
+									//alert('d');
+									console.log('s ', data.address);
+								} 
+								
+								tpData = {services: ndata, data: data};
+								console.log(tpData, 'content is', $page.find('div[data-role="content"]'));
+
+								$('#services-block').find('div[data-role="content"]').html(_.template(tpl, tpData)).trigger('create')
+								.promise().done(function(){
+									ah =  $('#services-block p.website a');
+									if(ah.length > 0) {
+										link = ah.attr('href')  || false;
+									}
+
+									addLinkout({subject: $('#services-block .info-box h2').text(), body: $('#services-block .info-box p.body').text()}, link);
+									
+									makeIscroll($('#services-block div[data-role=content]'));
+
+								});
+								createNextPrev(ndata, services);
+								updateLang('services-block');
+							});
+							
+						});
+						
+						
+						function createNextPrev(nxdata, services) {
+							ctr = nxdata.__ctr;
+							console.log('ctr', ctr);
+							pre = 'services-block.html?id=';
+
+							ctrPrev = (ctr - 1)*1;
+							ctrNext = (ctr + 1)*1;
+							var prev, next;
+							if(ctrPrev > -1) {
+								prev = _.detect(services, function(r){ return (r.__ctr*1) == ctrPrev});
+								prevUrl = pre + prev.guid + '&_=' + Math.random();
+							} else {
+								prevUrl = '#'; 
+							}
+
+							next = _.detect(services, function(r){ return (r.__ctr*1) == ctrNext});
+							if(!_.isUndefined(next)) {
+								nextUrl = pre + next.guid + '&_=' + Math.random();
+							} else {
+								nextUrl = '#';
+							}
+
+							console.log('prevNext', ctrPrev, prev, ctrNext, next);
+
+
+
+							$('#services-block').find('span.next-prev a.prev').attr('href', prevUrl).bind('vclick', function(ev){
+								ev.preventDefault();
+								$this = $(this);
+								//$('#services-block').removeClass('ev-attached');
+								$.mobile.changePage($this.attr('href'), {reloadPage: true});
+								
+							});
+
+							$('#services-block').find('span.next-prev a.next').attr('href', nextUrl).bind('vclick', function(ev){
+								ev.preventDefault();
+								$this = $(this);
+								//$('#services-block').removeClass('ev-attached');
+								$.mobile.changePage($this.attr('href'), {reloadPage: true});
+
+							});
+						}
+					
+						
+						
+						$('#services-block .iscroll-footer div.linkout a').live('vclick', function(ev){
+							ev.preventDefault();
+							ah =  $('#services-block p.website a');
+							link = ah.attr('href');
+
+							doLinkout({subject: $('#services-block .info-box h2').text(), body: $('#services-block .info-box p.body').text()}, link);
+
+						});
+						
+						$('a.read-full-remove', $('#services-block')).live('click', function(ev){
+							ev.preventDefault();
+							href = $(this).attr('href');
+							$.mobile.changePage('external.html?url=' + escape(href));
+
+						});
+						
+						$page.live('pageshow', function(){
+							//addMainFooter($page, 'services');
+							//$('#iscroll-footer-tpl').css({display:'none'});
+							//$('body').addClass('no-footer');
+						});
+						
+						/*$page.live('pagehide', function(){
+							//$(this).remove();
+							
+						});*/
+					//});
+		});
+	</script>
+</div>

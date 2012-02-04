@@ -1,0 +1,49 @@
+<div id="external-block" data-role="page"  data-dom-cache="false">
+	<div data-role="header"  class="main-header" data-theme="b">
+		<a href="#" data-role="button" data-rel="back"  data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1>External Site</h1>
+	</div>
+	<div data-role="content" style="background: #fff;">
+		<div class="article">
+		</div>
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		$.mobile.showPageLoadingMsg();
+		pageScript($('#external-block'), function($page) {
+			$.mobile.showPageLoadingMsg();
+			function get_url(uri) {
+				return uri.split('external.html?url=')[1];
+			}
+			
+			url = get_url($page.attr('data-url'));
+			if(url.indexOf('%253A') > -1) unescape(unescape(url));
+			nurl = 'external2.php?_=' + escape(url);
+			//nurl = 'external2.php?_= ' + escape(url);
+			
+			console.log('url', "\n", $page.attr('data-url'), "\n", url, "\n", nurl);
+			
+			$('div[data-role=content]', $('#external-block')).html("").load(nurl, function(){
+				
+				//alert('page loaded');
+				$.mobile.showPageLoadingMsg();
+				setTimeout(function(){
+					makeIscroll($('#external-block div[data-role=content]'), 'external-block-screw');
+					$.mobile.hidePageLoadingMsg();
+				}, 300);	
+			});
+			
+			$('#external-block .iscroll-footer div.linkout a').live('vclick', function(ev){
+				ev.preventDefault();
+				url = get_url($page.attr('data-url'));
+				link = unescape(url);
+				//link = 'externalsite.html?url=' + escape(url);
+				doLinkout(false, link);
+				console.log('IFRAME PAGE', url, link);
+				//$.mobile.changePage(link);
+			});
+			$page.live('pageshow', function(){
+				addMainFooter($page, 'news');
+			});
+		});
+	</script>
+</div>			

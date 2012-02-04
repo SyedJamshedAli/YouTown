@@ -1,0 +1,291 @@
+<div id="events-block" data-role="page" data-dom-cache="false">
+	<div data-role="header"  class="main-header"  data-theme="b">
+		<a href="events.html" data-role="button" data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1 class="lang events">Events</h1>
+		<span data-role="controlgroup" data-type="horizontal" class="next-prev" style="">
+			<a href="#" class="prev" data-role="button"><img src="img/arrow_up.png"  height="10" alt="Arrow Down"></a>
+			<a href="#" class="next"  data-role="button"><img src="img/arrow_down.png" height="10" alt="Arrow Down"></a>
+		</span>	
+		
+	</div>
+	<div data-role="content">
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#events-block'), function($page) {
+						//$('#home div[data-id=global-footer]').clone().appendTo($page);
+						//setActiveFooterNav($page, 'events.html');
+						//console.log($page);
+						addMainFooter($page, 'events');
+						
+						$page.live('pageshow', function(){
+							if($('#events-block').hasClass('attachv')) return;
+							
+							$('#events-block').addClass('attachv');
+							
+							//id = $page.attr('data-url').split('?id=')[1];
+							id = getParams(location.href, 'id');
+							$('body').data('events-last-id', id);
+							events = $('body').data('events-data');
+							if(_.isUndefined(events)) {
+								events = store.get('jsondata.events-data');
+								//$.mobile.changePage('events.html', {reloadPage: true});
+							}
+							ndata = events[id];
+							
+							
+							//console.log('events data', data);
+							tpl = [
+								'<div style="margin: 10px;">',
+								'<div class="events-block info-box ui-corner-all">',
+								'<h2><%= data.title %></h2>',
+								'<p><span><%= data.location %></span><br /> <span><span class="lang start">Start</span>: <%= data.__starttime %></span><br /><span><span class="lang end">End</span>: <%= data.__endtime %></span></p>',
+								'<p class="body">', 
+								'<% if(!_.isEmpty(data.summary)) { %>',
+								'<span class="lang description">Description: </span>',
+								'<%= data.summary %>',
+								'<% } %>',
+								'</p>',
+								'</div>',
+								'<% linky =  ["","#"]; if(data.link != undefined) {linky = data.link.split(\'VALUE=URI:\') || ["","#"]; if(linky[1] == undefined && data.link.indexOf("http://") > -1) {linky = ["", data.link]}; };   %>',
+								
+								'<% if(PhoneGap != undefined) { %>',
+									'<a href="javascript:;" class="ical lang add-calendar-pg" data-role="button" data-icon="arrow-r" data-iconpos="right" data-cal-start=""><img src="img/83-calendar.png" height="14" alt="83 Calendar" style="margin-right: 5px;"> Add to Calendar</a>',
+								'<% } else { %>',
+									'<a href="<%= data.ical %>" rel="external" class="ical lang add-calendar" data-role="button" data-icon="arrow-r" data-iconpos="right"><img src="img/83-calendar.png" height="14" alt="83 Calendar" style="margin-right: 5px;"> Add to Calendar</a>',
+								
+								'<% } %>',
+								
+									
+								
+								//'<% console.log("lenk", linky[1], linky[1].length); %>',
+								'<% if(linky[1] != "" && linky[1] != undefined ) { %>',
+								'<a href="<%= linky[1] %>" rel="external" target="_blank" class="read-full lang more-info" data-role="button" data-icon="arrow-r" data-iconpos="right"><img src="img/globe_world_browser.png" height="14" alt="68 Paperclip" style="margin-right: 4px;"> More Info</a>',
+								'<% } %>',
+								'<% if(!_.isEmpty(data.phone)) { %>',
+									//'<div class="services-block info-box ui-corner-all">',
+									//'<p class="group"><%= data.group %></p>',
+									'<a href="tel:<%= data.phone %>" class="phone" data-icon="arrow-r" data-role="button" data-iconpos="right"><img src="img/75-phone.png" style="margin-right: 5px;" height="14" alt="75 Phone"> <%= data.phone %></a>',
+									//'</div>',
+								'<% } %>',
+								
+								/* // old ui;
+								'<% if(!_.isEmpty(data.location)) { %>',
+									'<div class="info-box address-box ui-corner-all">',
+									'<p class="address-map-bg-icon" data-data-content="<%= data.location || false %>"><%= data.location %></p>',
+									'</div>',
+								'<% } %>',
+								 
+								
+								'<% if(!_.isEmpty(data.location)) { %>',
+									'<a data-role="button" class="address-box-maplink lang directions-to-here" href="http://maps.google.com/maps?saddr=<%= data.saddr %>&daddr=<%= data.location %>" rel="external" data-icon="arrow-l" data-iconpos="right">Directions to here</a>',
+								'<% } %>',
+								*/
+								
+									'<% if(!_.isEmpty(data.location)) { %>',
+										'<div class="ui-grid-a">',
+										'<div class="ui-block-a">','<a data-role="button" href="http://maps.google.com/maps?q=<%= data.location %>" rel="external" class="lang map" data-icon="arrow-r" data-iconpos="right">',
+										//'<%= data.address[0].location %>', 
+										'Map',
+										'</a>', '</div>',
+
+										'<div class="ui-block-b">','<a data-role="button" href="http://maps.google.com/maps?saddr=<%= data.saddr %>&daddr=<%= data.location %>" rel="external" class="lang directions" data-icon="arrow-r" data-iconpos="right">Directions</a>', '</div>',
+										'</div>',
+									'<% } %>',
+								
+								'<div id="linkout-cont2" style="display:none;">',
+									'<a href="#" class="email lang email-friend" data-role="button" data-icon="arrow-r" data-iconpos="right"><img src="img/18-envelope.png" height="12" alt="18 Envelope" style="margin-right: 5px;"> E-Mail to friend</a>',
+								//	'<a href="#" class="safari" data-role="button" data-icon="arrow-r" data-iconpos="right" rel="external">Open in browser</a>',
+								'</div>',
+								
+								
+								'</div>',
+								
+							].join("");
+
+							function makeIcalUri(data) {
+								function fixdate(date) {
+									b = date.split('/');
+									return [ b[1], b[0], b[2] ].join('/'); 
+								}
+								
+								if(PhoneGap != undefined) return 'javascript:;';
+								
+								uri = 'ical.php?uid=' + data.guid;
+								uri += '&ds='+escape(fixdate(data.starttime_local));
+								uri += '&de='+escape(fixdate(data.endtime_local));
+								uri += '&s='+escape(data.title + ' - ' + data.summary);
+								
+								
+								
+								return uri;
+							}
+								
+							$.getJSON(API + 'events/', {id: id}, function(data){
+								console.log(data);
+								pos = store.get('config.position');
+								saddr = pos.join(",");
+								data.saddr = saddr;
+								
+								data['ical'] = makeIcalUri(data);
+								tz = data.starttime_local.split(" ")[2] || '';
+								
+								stimeloc_ = data.starttime_local.split(" ");
+								stimeloc = [stimeloc_[0], stimeloc_[1]].join(" ");
+								
+								etimeloc_ = data.endtime_local.split(" ");
+								etimeloc = [etimeloc_[0], etimeloc_[1]].join(" ");
+								
+								fixedDateArr = stimeloc.split("/");
+								fixedDate = Date.parse([fixedDateArr[1], fixedDateArr[0], fixedDateArr[2]].join("/"));
+								console.log('fixedDate', fixedDate);
+								pdate_start = getCalendarDate(fixedDate *1, true, true) + ' at ' + getClockTime(fixedDate*1) + ' ' + tz;
+								
+								pdate_start = formatDateTime(getCalendarDate(fixedDate *1, true, true), getClockTime(fixedDate*1), tz);
+								
+								data['__starttime'] = pdate_start;
+								
+								fixedDateArr = etimeloc.split("/");
+								fixedDate = Date.parse([fixedDateArr[1], fixedDateArr[0], fixedDateArr[2]].join("/"));
+								console.log('e fixedDate', fixedDate, data.endtime_local);
+								pdate_end = getCalendarDate(fixedDate *1, true, true) + ' at ' + getClockTime(fixedDate*1)  + ' ' + tz;
+
+								pdate_end = formatDateTime(getCalendarDate(fixedDate *1, true, true), getClockTime(fixedDate*1), tz);
+								data['__endtime'] = pdate_end;
+								
+								tpData = {events: ndata, data: data};
+								console.log(tpData);	
+								$('#events-block').find('div[data-role="content"]').html(_.template(tpl, tpData)).trigger('create').promise().done(function(){
+									
+									ah =  $('#events-block a.read-full');
+									if(ah.length > 0) {
+										link = ah.attr('href')  || false;
+									}
+									addLinkout({subject: $('#events-block .info-box h2').text(), body: $('#events-block .info-box p.body').text()}, link);
+									if($('#events-block a.read-full').attr('href') == "" || $('#events-block a.read-full').attr('href') == "#") $('#events-block a.read-full').hide();
+									makeIscroll($('#events-block div[data-role=content]'), 'events-block-screw');
+									console.log('ccc', $('#events-block p.address-map-bg-icon').attr('data-data-content'));
+									$('#events-block a.address-box-maplink').css({display:''});
+									$('#events-block div.address-box').css({display:''});
+									if($('#events-block p.address-map-bg-icon').attr('data-data-content') == 'false') {
+											$('#events-block a.address-box-maplink').css({display:'none'});
+											$('#events-block div.address-box').css({display:'none'});
+									}
+									//if($('body').hasClass('isApp')) {
+										//$('#events-block a.add-calendar').hide();
+										console.log('Calendar add + ' + $('#events-block a.add-calendar-pg').length);
+										$('#events-block a.add-calendar-pg').bind('vclick',function(ev){
+											
+											ev.preventDefault();
+											function fixdate(date) {
+												datedate = date.split(" ");
+												date1 = datedate[0];
+												b = date1.split('/');
+												return [ b[2], b[1], b[0] ].join('-') + " " + datedate[1]; 
+											}
+											
+											  var cal;
+											  cal = window.plugins.calendarPlugin
+											  
+											      var title = data.title;
+											      var location = data.location || "";
+											      var notes = data.summary;
+											      var startDate = fixdate(data.starttime_local);
+											      var endDate = fixdate(data.endtime_local);
+											      
+											     console.log('ADD CAL');
+												console.log(title+" "+location+" "+notes+" "+startDate+" "+endDate);
+											      cal.createEvent(title,location,notes,startDate,endDate);
+											
+											
+										});
+									//}
+									
+									
+								});
+								createNextPrev(ndata, events);
+								updateLang('events-block');
+							});
+							
+						});
+						
+						
+						
+						
+						function createNextPrev(ndata, events) {
+							ctr = ndata.__ctr;
+
+							pre = 'events-block.html?id=';
+
+							ctrPrev = ctr - 1;
+							ctrNext = ctr + 1;
+							var prev, next;
+							if(ctrPrev > -1) {
+								prev = _.detect(events, function(r){ return r.__ctr == ctrPrev});
+								prevUrl = pre + prev.guid ;
+							} else {
+								prevUrl = '#'; 
+							}
+
+							next = _.detect(events, function(r){ return r.__ctr == ctrNext});
+							if(!_.isUndefined(next)) {
+								nextUrl = pre + next.guid ;
+							} else {
+								nextUrl = '#';
+							}
+
+							console.log('prevNext', ctrPrev, prev, prevUrl, ctrNext, next, nextUrl);
+
+							console.log('prevUrl', prevUrl);
+
+							$('#events-block').find('span.next-prev a.prev').attr('href', prevUrl).bind('vclick', function(ev){
+								ev.preventDefault();
+								$this = $(this);
+								//console.log('$this.attr', $this.attr('href'));
+								
+								if($this.attr('href') == '#') return;
+								
+								$('#events-block').removeClass('ev-attached');
+								$.mobile.changePage($this.attr('href'), {reloadPage: true});
+								
+							});
+
+							$('#events-block').find('span.next-prev a.next').attr('href', nextUrl).bind('vclick', function(ev){
+								ev.preventDefault();
+								$this = $(this);
+								
+								if($this.attr('href') == '#') return;
+								
+								$('#events-block').removeClass('ev-attached');
+								$.mobile.changePage($this.attr('href'), {reloadPage: true});
+
+							});
+						}
+
+						$('a.read-full-remove', $('#events-block')).live('click', function(ev){
+							ev.preventDefault();
+							href = $(this).attr('href');
+							$.mobile.changePage('external.html?url=' + escape(href));
+
+						});
+						
+						
+						$('#events-block .iscroll-footer div.linkout a').live('vclick', function(ev){
+							ev.preventDefault();
+							ah =  $('#events-block a.read-full');
+							link = ah.attr('href');
+
+							doLinkout({subject: $('#events-block .info-box h2').text(), body: $('#events-block .info-box p.body').text()}, link);
+
+						});
+						
+						$page.live('pageshow', function(){
+							//addMainFooter($page, 'events');
+							//$('body').addClass('no-footer');
+							console.log('is APP ' + $('body').hasClass('isApp'))
+							
+						});
+
+					//});
+		});
+	</script>
+</div>			

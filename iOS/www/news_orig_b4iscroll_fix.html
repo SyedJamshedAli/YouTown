@@ -1,0 +1,241 @@
+<div id="news" data-role="page" data-cache="true">
+	<div data-role="header" class="main-header"  data-theme="b">
+		<a href="home.html" data-role="button" data-direction="reverse" data-icon="arrow-l">Back</a>
+		<h1 class="lang news">News</h1>
+		<a href="news-filter.html" data-role="button">Filter</a>
+	</div>
+	<div data-role="content">
+		<ul class="news-list wrap-list" data-filter="true" data-filter-placeholder="Search News">
+			
+		</ul>
+		<p>&nbsp;</p>
+	</div>
+	
+	<script type="text/javascript" charset="utf-8">
+		pageScript($('#news'), function($page) {
+			updateLangPlaceholder('news', $('#news ul.news-list'), 'search-news');
+			 
+			$page.data('init-content', $page.find('div[data-role=content]').html());
+			$page.find('h1').bind('vclick', function(){
+				$('#news div[data-id=global-footer]').addClass('ui-fixed-overlay');
+			});
+			
+			
+			function addSearchEvent($page) {
+				$page = $('#news');
+				filterForm = $('form.ui-listview-filter', $page);
+				if(!filterForm.hasClass('evAttach')) {
+					$page.data('filterForm', filterForm);
+					//console.log('addSearchEvent', $page.data('filterForm'));
+					filterForm.addClass('evAttach').bind('submit.filterFormAction', filterFormAction);
+				}
+			}
+			
+			function searchNews(searchnews, callBack) {
+				myloc = store.get('config.location.set');
+				uri = API + 'news/' + myloc.country + '/' + myloc.county + '/' + myloc.city + '/';
+				$('body').data('searched-news', searchnews);
+				params = {};
+				params.fullText = searchnews;
+				
+				/*$.getJSON(uri, params, function(data){
+					$page.addClass('news-loading');
+					if(_.isFunction(callBack)) callBack(data, $page, top, true);
+				});
+				*/
+				getJSONcached(uri, params, function(data){
+					$page.addClass('news-loading');
+					if(_.isFunction(callBack)) callBack(data, $page, top, true);
+				});
+			
+				
+			}
+			
+			function filterFormAction() {
+				searchnews = $(this).find('input[data-type=search]').val();
+				searchNews(searchnews, createUL);
+				//console.log('filterForm submit');
+				return false;
+
+			}
+			
+			function resetContent($page) {
+				$page.find('div[data-role=content]').html($page.data('init-content'));
+			}
+			
+			function getFeed($page, callBack, count, top) {
+				myloc = store.get('config.location.set');
+				uri = API + 'news/' + myloc.country + '/' + myloc.county + '/' + myloc.city + '/';
+				
+				params = {};
+				params.num = count || 25;
+				//FILTER params not ADDED; NOT WORKING IN API;
+				
+				/*$.getJSON(uri, params, function(data){
+					$page.addClass('news-loading');
+					if(_.isFunction(callBack)) callBack(data, $page, top);
+				});*/
+				getJSONcached(uri, params, function(data){
+					$page.addClass('news-loading');
+					//console.log('json cacher callback ', _.isFunction(callBack), callBack.toString(), data);
+					if(_.isFunction(callBack)) callBack(data, $page, top);
+				});
+			}
+			
+			function createList(data, $page, search) {
+				li = [];
+				//d = null;
+				d = $("body").data('news-data') || {};
+				if(!_.isUndefined(search)) d = {}; 
+				//if(_.isNull(d)) d = {};
+				cl = '';
+				if(!_.isUndefined(search)) {
+					li.push('<li data-role="list-divider">Results for <em>'+$('body').data('searched-news')+'</em></li>');
+					 cl = 'search';
+				}
+				
+				 
+				//BUG WITH ACTUAL API IN HANDLING COMMA DELIMITED FILTERS; ONLY WORKS FOR ONE FILTER; 
+				//will use as class filter/show/hide
+				filterState = store.get('config.news.filter') || [];
+				hasFilterOff = store.get('config.news.filterhas.off') || null;
+				hasFilterOffOn = false;
+				if(!_.isNull(hasFilterOff) && hasFilterOff == true) {
+					hasFilterOffOn = true;
+				} 
+				
+				
+				var row, i;
+				newsFilters = {};
+				for(i=0; i< data.length; i++) {
+					row = data[i];
+					//console.log('s', row.id, data[i]['id'], data);
+					idid = (cl == 'search') ? row.guid : row.id;
+					
+					img = '<img src="'+CITYLIFE_BASE_URL+row.image.image_url+'" class="ui-li-icon" />';
+					title = '<span class="title">'+row.title+'</span><br />';
+					//dd = new Date(row.publishdate);
+					//pdate = DateFormatter.format(dd, "F d") +' at '+ DateFormatter.format(dd, "h:i A");
+					if(cl == 'search') {
+						row.publishdate = row.pubDateTime;
+					} 
+					
+					pdate = row.publishdate;
+					
+					pdateloc_ = row.publishdate_local.split(" ");
+					pdateloc = [pdateloc_[0], pdateloc_[1]].join(" ");
+					
+					
+					fixedDateArr = pdateloc.split("/");
+					fixedDate = Date.parse([fixedDateArr[1], fixedDateArr[0], fixedDateArr[2]].join("/"));
+					//console.log('fixedDate', fixedDate, [fixedDateArr[1], fixedDateArr[0], fixedDateArr[2]].join("/"));
+					
+					tz = row.publishdate_local.split(" ")[2] || '';
+					
+					pdate = getCalendarDate(fixedDate *1, true, true) + ' at ' + getClockTime(fixedDate*1);
+					pdate += ' ' + tz;
+					
+					pdate = formatDateTime(getCalendarDate(fixedDate *1, true, true), getClockTime(fixedDate*1), tz);
+					
+					date = '<span class="summary">'+pdate+'</span>';
+					row.__ctr = i;
+					d[idid] = row;
+					
+					filterKey = makeKey(row.feedName);
+					newsFilters[filterKey] = row.feedName;
+					
+					//filterKey = row.feedName.replace(" ", "_");
+					state = filterState[filterKey] || '';
+					filter = ' filter-' + filterKey + ' ' + state;
+					li.push('<li class="'+cl+filter+'"><a href="news-block.html?id='+idid+'" data-data-id="'+idid+'">'+img+title+date+'</a></li>');
+					if(i> 24 && i%25 == 0) {
+						heading = 'result ' + (i + 1) + ' to ' + (i + 25);
+						if(hasFilterOffOn) heading = 'Next results.';
+						li.push('<li data-role="list-divider">'+heading+'</li>');
+					}
+				}
+				store.set('jsondata.news-data', d);
+				store.set('config.news.filterData', newsFilters);
+				
+				$("body").data('news-data', d);
+				
+				return li.join("");
+			}
+			$iscroll = null;
+			
+			function createUL(data, $page, top, search) {
+				resetContent($page);
+				
+				$newsUL = $page.find('ul.news-list');
+				$newsUL.attr('data-role', "");
+				$newsUL.html("");
+				
+				list = createList(data, $page, search);
+				next25 = 'Next 25';
+				hasFilterOff = store.get('config.news.filterhas.off') || null;
+				
+				if(!_.isNull(hasFilterOff) && hasFilterOff == true) next25 = 'Load more ...';
+				
+				nextnum = data.length + 25;
+				if(_.isUndefined(search) && data.length > 24) list += '<li class="next"><a href="#" data-next-num="'+nextnum+'" class="add-more lang next-25">'+next25+'</a></li>';
+				//console.log(list);
+				$newsUL.html(list).promise().done(function(){
+					$page.find('form.ui-listview-filter').remove();
+					$newsUL.attr('data-role', "listview").listview().promise().done(function(){
+						$newsUL.trigger('create');
+						$.mobile.hidePageLoadingMsg();
+						
+						addSearchEvent($page);
+						
+						scrollto = top || 1;
+						$iscroll = makeIscrollPullRefresh($('#news div[data-role=content]'), 'screwme', {
+							pullDownAction: function(i){
+								getFeed($page, createUL, 25);
+								
+							} 
+						});
+						
+						//$('#news div[data-id=global-footer]').addClass('ui-fixed-overlay');
+						
+						if(!_.isUndefined($('body').data('news-last-id'))) {
+							aa = $newsUL.find('a[data-data-id="'+$('body').data('news-last-id')+'"]');
+							if(aa.length > 0) scrollto = aa.offset().top;
+						}
+						//console.log('scrollto', scrollto);
+						//$('#news .iscroll-wrapper').scrollTop(scrollto);
+						
+						//if(scrollto == 1) $('#news .iscroll-wrapper').scrollTop(0);
+						
+						$('li.next a.add-more', $('#news')).bind('vclick', function(){
+							//$newsUL.attr('data-role', "");
+							top = $(this).offset().top;
+							console.log('pass top', top);
+							$.mobile.showPageLoadingMsg();
+							nextnum = $(this).attr('data-next-num');
+							$('body').data('news-last-num', nextnum);
+							getFeed($page, createUL, nextnum, top);
+						});
+						updateLang('news');
+					}); 
+				})
+			}
+			$('body').bind('orientationchange', function(){
+				//alert(typeof $iscroll);
+				if($iscroll != undefined) $iscroll.refresh();
+			});
+			
+			$page.live('pageshow', function(){
+				$.mobile.showPageLoadingMsg();
+				addMainFooter($page, 'news');
+				//$('#news').trigger('refresh');
+			});
+			num = $('body').data('news-last-num') || 25;
+			if(!$page.hasClass('news-loading')) getFeed($page, createUL, num);
+			
+			
+		});
+		
+		
+	</script>
+
+</div>
